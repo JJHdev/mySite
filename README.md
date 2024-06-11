@@ -19,10 +19,7 @@
    
 6. CI-CD 연결 & docker 이미지 자동화배포 (gitauction을 이용하여 배포시)
   -. Dockerfile을 추가하여 Docker이미지 배포시 설정
-  -. .github/workflows/gradle.yml 을 추가하여 git에 commit시 DockerHub에 배포 되도록 구현
+  -. .github/workflows/gradle.yml 을 추가하여 git에 commit시 DockerHub에 및 gitauction에 CI-CD 구현
 
-9. aws클라우드에 임시로만 배포하기.
-
-10. 로그인 기능 구현하기.
-
-11. 
+7. 로그인 기능 구현하기.
+ 
