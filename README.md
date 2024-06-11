@@ -17,12 +17,11 @@
    -. 압축을 푼 폴더에서 폴더파일을 CSS,JS,SCSS등 경로에 넣고 각 html위치에 맞게 이동하기
    -. 각 html에 있는 경로를 맞줘서 작동한다.
    
-6. CI-CD 연결
+6. CI-CD 연결 & docker 이미지 자동화배포 (gitauction을 이용하여 배포시)
+  -. Dockerfile을 추가하여 Docker이미지 배포시 설정
+  -. .github/workflows/gradle.yml 을 추가하여 git에 commit시 DockerHub에 및 gitauction에 CI-CD 구현
+  -. githubAuction은 workflow를 자동화 할수 있도록 도와주는 도구이며, 여러 Job으로 구성되고, Event에 의해 트리거될 수 있는 자동화된 프로세스
+  -. Workflow 파일은 YAML으로 작성되고, Github Repository의 .github/workflows 폴더 아래에 저장됨
 
-7. docker 이미지 자동화배포 (gitauction을 이용하여 배포시)
-
-8. aws클라우드에 임시로만 배포하기.
-
-9. 로그인 기능 구현하기.
-
-10. 
+8. 로그인 기능 구현하기.
+ 
