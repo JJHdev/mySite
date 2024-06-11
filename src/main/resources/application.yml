@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: mySite
+
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521:xe
+    username: JJH
+    password: 1234
+    driver-class-name: oracle.jdbc.OracleDriver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    generate-ddl: false
+    show-sql: true
+    database: oracle
+    database-platform: org.hibernate.dialect.OracleDialect
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+
+logging:
+  level:
+    org.hibernate: info
