@@ -16,6 +16,13 @@ spring:
     database: oracle
     database-platform: org.hibernate.dialect.OracleDialect
 
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false  # 캐싱 비활성화
+
 server:
   servlet:
     encoding:
