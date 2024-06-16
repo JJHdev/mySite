@@ -1,22 +1,27 @@
 package com.project.mySite.users;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "USERS")
 public class Users {
 
     @Id
-    @Column(name = "USER_ID")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_key_generator")
+    @SequenceGenerator(name = "user_key_generator", sequenceName = "user_key_seq", allocationSize = 1)
+    @Column(name = "USER_KEY")
+    private Long userKey;
+
+    @NotNull
+    @Column(name = "USER_ID", nullable = false)
     private String userId;
 
     @NotNull
@@ -28,11 +33,6 @@ public class Users {
     @Size(max = 300)
     @Column(name = "PASSWORD", nullable = false)
     private String password;
-
-    @NotNull
-    @Size(max = 300)
-    @Column(name = "PASSWORDCHCK", nullable = false)
-    private String passwordChck;
 
     @NotNull
     @Pattern(regexp = "[MF]")
@@ -53,7 +53,7 @@ public class Users {
     private String status = "ACTIVE";
 
     @Column(name = "CREATE_DATE", nullable = false, updatable = false)
-    private LocalDateTime createDate = LocalDateTime.now();
+    private Timestamp createDate;
 
     @Column(name = "UPDATE_DATE")
     private LocalDateTime updateDate;
@@ -64,25 +64,33 @@ public class Users {
     @Override
     public String toString() {
         return "Users{" +
-                "userId=" + userId +
+                "userKey=" + userKey +
+                ", userId='" + userId + '\'' +
                 ", userName='" + userName + '\'' +
                 ", password='" + password + '\'' +
-                ", passwordChck='" + passwordChck + '\'' +
                 ", gender='" + gender + '\'' +
                 ", email='" + email + '\'' +
                 ", profilePictureUrl='" + profilePictureUrl + '\'' +
                 ", status='" + status + '\'' +
                 ", createDate=" + createDate +
                 ", updateDate=" + updateDate +
-                ", updateId=" + updateId +
+                ", updateId='" + updateId + '\'' +
                 '}';
     }
 
-    public String getUserId() {
+    public Long getUserKey() {
+        return userKey;
+    }
+
+    public void setUserKey(Long userKey) {
+        this.userKey = userKey;
+    }
+
+    public @NotNull String getUserId() {
         return userId;
     }
 
-    public void setUserId(String userId) {
+    public void setUserId(@NotNull String userId) {
         this.userId = userId;
     }
 
@@ -100,14 +108,6 @@ public class Users {
 
     public void setPassword(@NotNull @Size(max = 300) String password) {
         this.password = password;
-    }
-
-    public @NotNull @Size(max = 300) String getPasswordChck() {
-        return passwordChck;
-    }
-
-    public void setPasswordChck(@NotNull @Size(max = 300) String passwordChck) {
-        this.passwordChck = passwordChck;
     }
 
     public @NotNull @Pattern(regexp = "[MF]") String getGender() {
@@ -142,11 +142,11 @@ public class Users {
         this.status = status;
     }
 
-    public LocalDateTime getCreateDate() {
+    public Timestamp getCreateDate() {
         return createDate;
     }
 
-    public void setCreateDate(LocalDateTime createDate) {
+    public void setCreateDate(Timestamp createDate) {
         this.createDate = createDate;
     }
 
