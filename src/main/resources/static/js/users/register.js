@@ -5,14 +5,12 @@ $(document).ready(function() {
 
         var formData = $(this).serialize(); // 폼 데이터 직렬화
 
-        console.log(formData);
-        alert(1);
-
         $.ajax({
             type: 'POST',
             url: $(this).attr('action'),
             data: formData,
             success: function(data) {
+
                 if (data.success) {
                     window.location.href = data.redirect; // 페이지 이동
                 } else {

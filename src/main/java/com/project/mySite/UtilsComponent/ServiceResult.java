@@ -6,21 +6,46 @@ public class ServiceResult<T> {
     private String errorMessage;
     private boolean success;
 
-    public ServiceResult(T data) {
-        this.data = data;
-        this.success = true;
-    }
 
-    public ServiceResult(String errorMessage) {
-        this.errorMessage = errorMessage;
-        this.success = false;
+    public ServiceResult() {
     }
 
     public static <T> ServiceResult<T> success(T data) {
-        return new ServiceResult<>(data);
+        ServiceResult<T> result = new ServiceResult<T>();
+        result.data = data;
+        result.success = true;
+        return result;
     }
 
     public static <T> ServiceResult<T> failure(String message) {
-        return new ServiceResult<T>(message);
+        ServiceResult<T> result = new ServiceResult<T>();
+        result.errorMessage = message;
+        result.success = false;
+        return result;
     }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    public void setSuccess(boolean success) {
+        this.success = success;
+    }
+
 }
