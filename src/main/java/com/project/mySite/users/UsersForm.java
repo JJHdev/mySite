@@ -16,25 +16,11 @@ public class UsersForm {
     private String password;
     private String passwordChck;
     private String gender;
-    private String email;
+    private String email1;
+    private String email2;
     private String profilePictureUrl;
     private String status = "ACTIVE";
     private LocalDateTime createDate = LocalDateTime.now();
-
-    @Override
-    public String toString() {
-        return "UsersForm{" +
-                "userId='" + userId + '\'' +
-                ", userName='" + userName + '\'' +
-                ", password='" + password + '\'' +
-                ", passwordChck='" + passwordChck + '\'' +
-                ", gender='" + gender + '\'' +
-                ", email='" + email + '\'' +
-                ", profilePictureUrl='" + profilePictureUrl + '\'' +
-                ", status='" + status + '\'' +
-                ", createDate=" + createDate +
-                '}';
-    }
 
     public String getUserId() {
         return userId;
@@ -76,12 +62,20 @@ public class UsersForm {
         this.gender = gender;
     }
 
-    public String getEmail() {
-        return email;
+    public String getEmail1() {
+        return email1;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setEmail1(String email1) {
+        this.email1 = email1;
+    }
+
+    public String getEmail2() {
+        return email2;
+    }
+
+    public void setEmail2(String email2) {
+        this.email2 = email2;
     }
 
     public String getProfilePictureUrl() {
@@ -106,5 +100,21 @@ public class UsersForm {
 
     public void setCreateDate(LocalDateTime createDate) {
         this.createDate = createDate;
+    }
+
+    @Override
+    public String toString() {
+        return "UsersForm{" +
+                "userId='" + userId + '\'' +
+                ", userName='" + userName + '\'' +
+                ", password='" + password + '\'' +
+                ", passwordChck='" + passwordChck + '\'' +
+                ", gender='" + gender + '\'' +
+                ", email1='" + email1 + '\'' +
+                ", email2='" + email2 + '\'' +
+                ", profilePictureUrl='" + profilePictureUrl + '\'' +
+                ", status='" + status + '\'' +
+                ", createDate=" + createDate +
+                '}';
     }
 }

@@ -27,6 +27,11 @@ dependencies {
 	// Optional: for the JSR 305 annotations (such as @Nullable)
 	implementation 'com.google.code.findbugs:jsr305:3.0.2'
 
+	//Email인증
+	implementation 'javax.mail:mail:1.4.7'
+	implementation 'org.springframework:spring-context-support:5.3.9'
+
+	//thymeleaf
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

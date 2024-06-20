@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.Map;
 
@@ -32,6 +33,8 @@ public class UserController {
     @PostMapping("/user/register")
     public <T> ResponseEntity register(UsersForm usersForm){
 
+        System.out.printf("userForm: %s\n", usersForm);
+
         ServiceResult<Users> result = userService.register(usersForm);
 
         if(result.isSuccess()){
@@ -42,6 +45,15 @@ public class UserController {
             return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
         }
 
+    }
+
+    //이메일 인증
+    @GetMapping("/user/emailCheck")
+    @ResponseBody
+    public String mailCheck(String email) {
+        System.out.println("이메일 인증 요청이 들어옴!");
+        System.out.println("이메일 인증 이메일 : " + email);
+        return "인증요청옴";
     }
 }
 

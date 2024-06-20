@@ -10,7 +10,7 @@ $(document).ready(function() {
             url: $(this).attr('action'),
             data: formData,
             success: function(data) {
-
+                console.log(data);
                 if (data.success) {
                     window.location.href = data.redirect; // 페이지 이동
                 } else {
@@ -23,4 +23,22 @@ $(document).ready(function() {
             }
         });
     });
+
+    $('#mail-Check-Btn').click(function(){
+        const email = $('#email1').val() + $('#email2').val();
+        console.log('email = ', email);
+        const checkInput = $('.mail-check-input')
+        console.log('emailCheckUrl = ', emailCheckUrl);
+
+        $.ajax({
+            type : 'get',
+            url : emailCheckUrl + email,
+            success: function (data){
+                console.log("data = ", data);
+                checkInput.attr('disabled', false);
+                alert('인증번호가 전송되었습니다.');
+            }
+        });
+    });
+
 });

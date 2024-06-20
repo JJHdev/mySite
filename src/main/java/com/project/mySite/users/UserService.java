@@ -25,7 +25,7 @@ public class UserService {
         users.setUserId(usersForm.getUserId());
         users.setUserName(usersForm.getUserName());
         users.setPassword(usersForm.getPassword());
-        users.setEmail(usersForm.getEmail());
+        users.setEmail(usersForm.getEmail1()+usersForm.getEmail2());
         users.setGender(usersForm.getGender());
         users.setStatus(usersForm.getStatus());
         users.setCreateDate(Utils.formatLocalDateTime(usersForm.getCreateDate()));
