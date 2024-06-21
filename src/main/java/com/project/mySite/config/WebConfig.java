@@ -1,4 +1,4 @@
-package com.project.mySite.conf;
+package com.project.mySite.config;
 
 import com.project.mySite.interceptor.ContextPathInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -18,17 +18,17 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public ServiceResult<Users> register(UsersForm usersForm){
+    public ServiceResult<Users> register(UsersDTO usersDTO){
 
         //DB 입력할 domain setting
         Users users = new Users();
-        users.setUserId(usersForm.getUserId());
-        users.setUserName(usersForm.getUserName());
-        users.setPassword(usersForm.getPassword());
-        users.setEmail(usersForm.getEmail1()+usersForm.getEmail2());
-        users.setGender(usersForm.getGender());
-        users.setStatus(usersForm.getStatus());
-        users.setCreateDate(Utils.formatLocalDateTime(usersForm.getCreateDate()));
+        users.setUserId(usersDTO.getUserId());
+        users.setUserName(usersDTO.getUserName());
+        users.setPassword(usersDTO.getPassword());
+        users.setEmail(usersDTO.getEmail1()+usersDTO.getEmail2_hidden());
+        users.setGender(usersDTO.getGender());
+        users.setStatus(usersDTO.getStatus());
+        users.setCreateDate(Utils.formatLocalDateTime(usersDTO.getCreateDate()));
 
         //유효성검사
         try {

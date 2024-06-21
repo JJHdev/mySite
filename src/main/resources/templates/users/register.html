@@ -16,6 +16,13 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 
+    <!-- 타임리프로 호출한 JavaScript 파일 -->
+
+    <script th:inline="javascript">
+        let contextPath = /*[[${contextPath}]]*/ '';
+    </script>
+    <script th:src="@{/js/users/register.js}" defer></script>
+
 </head>
 
 <body class="bg-gradient-primary">
@@ -58,10 +65,10 @@
                                 </div>
 
                                 <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                    <div class="col-sm-4 mb-2 mb-sm-0">
                                         <input type="text" class="form-control" name="email1" id="email1" placeholder="이메일" required>
                                     </div>
-                                    <div class="col-sm-6">
+                                    <div class="col-sm-4">
                                         <select class="form-control" name="email2" id="email2" required>
                                             <option>@naver.com</option>
                                             <option>@daum.net</option>
@@ -69,15 +76,19 @@
                                             <option>@hanmail.com</option>
                                             <option>@yahoo.co.kr</option>
                                         </select>
+                                        <input type="hidden" name="email2_hidden" id="email2_hidden">
+                                    </div>
+                                    <div class="col-sm-4 mb-2 mb-sm-0">
+                                        <button type="button" class="btn btn-primary" id="mail-Send-Btn">본인인증</button>
                                     </div>
                                 </div>
 
                                 <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
-                                        <button type="button" class="btn btn-primary" id="mail-Check-Btn">본인인증</button>
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" name="email_number" id="email_number" placeholder="인증번호 6자리를 입력해주세요!" disabled="disabled" maxlength="6">
                                     </div>
-                                    <div class="col-sm-6">
-                                        <input class="form-control mail-check-input" placeholder="인증번호 6자리를 입력해주세요!" disabled="disabled" maxlength="6">
+                                    <div class="col-sm-4 mb-3 mb-sm-0">
+                                        <button type="button" class="btn btn-primary" id="mail-Check-Btn" disabled="disabled">이메일 인증</button>
                                     </div>
                                     <span id="mail-check-warn"></span>
                                 </div>
@@ -114,14 +125,6 @@
 
     <!-- Custom scripts for all pages-->
     <script th:src="@{/js/sb-admin-2.min.js}"></script>
-
-    <script th:inline="javascript">
-        // Thymeleaf 템플릿을 사용하여 URL 생성
-        var emailCheckUrl = /*[[@{/user/emailCheck}]]*/ '';
-    </script>
-
-    <!-- 타임리프로 호출한 JavaScript 파일 -->
-    <script th:src="@{/js/users/register.js}" defer></script>
 
 </body>
 
