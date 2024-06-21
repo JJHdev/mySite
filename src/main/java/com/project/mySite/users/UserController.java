@@ -33,6 +33,7 @@ public class UserController {
     public <T> ResponseEntity register(UsersDTO usersDTO){
         ServiceResult<Users> result = userService.register(usersDTO);
 
+
         if(result.isSuccess()){
             Users registeredUser = result.getData();
             return ResponseEntity.ok().body(Map.of("success" , true, "redirect" , "/"));
