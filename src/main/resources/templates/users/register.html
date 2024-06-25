@@ -40,14 +40,20 @@
                                 <h1 class="h4 text-gray-900 mb-4">회원가입</h1>
                             </div>
                             <form class="userForm" th:action="@{/user/register}" method="post">
-                                <div class="form-group">
-                                    <input type="text" class="form-control form-control-user" id="userId" name="userId" placeholder="유저ID" required>
-                                </div>
                                 <div class="form-group row">
-                                    <div class="col-sm-6 mb-3 mb-sm-0">
+                                    <div class="col-sm-8">
+                                        <input type="text" class="form-control" id="userId" name="userId" placeholder="유저ID" required>
+                                    </div>
+                                    <div class="col-sm-4 mb-3 mb-sm-0">
+                                        <button type="button" class="btn btn-primary" id="id-Check-Btn">중복아이디 확인</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group row">
+                                    <div class="col-sm-8 mb-3 mb-sm-0">
                                         <input type="text" class="form-control form-control-user" id="userName" name="userName" placeholder="이름" required>
                                     </div>
-                                    <div class="form-group row">
+                                    <div class="col-sm-4 mb-3 mb-sm-0">
                                         <div class="custom-control custom-checkbox small">
                                             <label>Gender</label><br>
                                             <input type="radio" name="gender" value="M" id="male"><label for="male">남성</label>

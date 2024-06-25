@@ -32,8 +32,6 @@ public class UserController {
     @PostMapping("/user/register")
     public <T> ResponseEntity register(UsersDTO usersDTO){
         ServiceResult<Users> result = userService.register(usersDTO);
-
-
         if(result.isSuccess()){
             Users registeredUser = result.getData();
             return ResponseEntity.ok().body(Map.of("success" , true, "redirect" , "/"));
@@ -41,7 +39,20 @@ public class UserController {
             String errorMessage = result.getErrorMessage();
             return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
         }
+    }
 
+    @PostMapping("/user/checkUser")
+    public <T> ResponseEntity checkUser(UsersDTO usersDTO){
+
+        ServiceResult<Users> result = userService.checkUser(usersDTO);
+
+        if(result.isSuccess()){
+            Users resultUser = result.getData();
+            return ResponseEntity.ok().body(Map.of("success" , true, "message" , resultUser.getUserId() +"의 아이디는 사용하실수 있습니다."));
+        }else{
+            String errorMessage = result.getErrorMessage();
+            return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
+        }
     }
 
 }
