@@ -1,12 +1,9 @@
 package com.project.mySite.email;
 
-import com.project.mySite.UtilsComponent.ServiceResult;
-import com.project.mySite.exception.DuplicateUserException;
-import com.project.mySite.exception.EmailCheckException;
-import com.project.mySite.users.Users;
+import com.project.mySite.component.Utils.ServiceResult;
+import com.project.mySite.component.exception.EmailCheckException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

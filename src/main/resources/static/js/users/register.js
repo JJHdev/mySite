@@ -5,8 +5,6 @@ async function sha256(message){
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-
-
 $(document).ready(function() {
     $('.userForm').submit(async function (event) {
         event.preventDefault(); // 폼 기본 제출 방지

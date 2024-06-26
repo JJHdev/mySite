@@ -49,6 +49,9 @@ server:
       force: true
       enabled: true
 
+jwt:
+  secret: askdjnaskjdkjsdasdfvfvhjtwrfbqkwjbekjqwbehjqwbejhqwbejhqwebjhwqebjhqwbejhqwbejhbqwehjbfjhbqjfhqaskdnsadnkjf
+
 logging:
   level:
     org.hibernate: info

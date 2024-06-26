@@ -1,4 +1,4 @@
-package com.project.mySite.UtilsComponent;
+package com.project.mySite.component.Utils;
 
 public class ServiceResult<T> {
 

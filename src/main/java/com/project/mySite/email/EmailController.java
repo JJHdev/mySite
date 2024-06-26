@@ -1,6 +1,6 @@
 package com.project.mySite.email;
 
-import com.project.mySite.UtilsComponent.ServiceResult;
+import com.project.mySite.component.Utils.ServiceResult;
 import jakarta.mail.MessagingException;
 
 import org.slf4j.Logger;
