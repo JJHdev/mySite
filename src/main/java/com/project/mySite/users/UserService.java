@@ -1,12 +1,18 @@
 package com.project.mySite.users;
 
+import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.Utils.ServiceResult;
 import com.project.mySite.component.Utils.Utils;
-import com.project.mySite.email.EmailRepository;
 import com.project.mySite.component.exception.ValidationUserException;
-import com.project.mySite.security.SecurityService;
+import com.project.mySite.email.EmailRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -16,15 +22,19 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final JwtUtil jwtUtil;
+    private final AuthenticationManager authenticationManager;
     private final EmailRepository emailRepository;
-    private final SecurityService securityService;
-
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository,EmailRepository emailRepository, SecurityService securityService) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager,
+                       EmailRepository emailRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.jwtUtil = jwtUtil;
+        this.authenticationManager = authenticationManager;
         this.emailRepository = emailRepository;
-        this.securityService = securityService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public ServiceResult<Users> register(UsersDTO usersDTO){
@@ -37,8 +47,8 @@ public class UserService {
             ValidUserIdDuplicate(users);
             validPasswordMatch(users, usersDTO);
             ValidEmailDuplicate(users);
-            ValidEmailDuplicate(users);
             ValidEmailCheck(users);
+            users.setPassword(passwordEncoder.encode(users.getPassword()));
             Users savedUser = userRepository.save(users);
             return ServiceResult.success(savedUser);
         } catch (ValidationUserException e){
@@ -71,7 +81,13 @@ public class UserService {
 
         try{
             validateUserIdAndPassword(users);
-            String token = securityService.createToken(users.getUserId(), 2*1000*60);
+
+            // Authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(users.getUserId(), users.getPassword())
+            );
+
+            String token = jwtUtil.createToken(authentication, 2*1000*60);
             usersDTO.setJwt(token);
 
             if(usersDTO.getJwt() == null || usersDTO.getJwt().isEmpty()) {
@@ -81,6 +97,8 @@ public class UserService {
             return ServiceResult.success(usersDTO);
         } catch (ValidationUserException e){
             return ServiceResult.failure(e.getMessage());
+        } catch (AuthenticationException e) {
+            return ServiceResult.failure("Invalid credentials: " + e.getMessage());
         } catch (Exception e) {
             return ServiceResult.failure("An unexpected error occurred: " + e.getMessage());
         }
@@ -150,7 +168,7 @@ public class UserService {
 
         // 비밀번호 검증
         Users foundUser = optionalUser.get();
-        if (!foundUser.getPassword().equals(users.getPassword())) {
+        if (!passwordEncoder.matches(users.getPassword(), foundUser.getPassword())) {
             throw new ValidationUserException("비밀번호가 일치하지 않습니다.");
         }
     }

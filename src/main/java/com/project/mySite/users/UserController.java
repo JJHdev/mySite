@@ -3,6 +3,10 @@ package com.project.mySite.users;
 import com.project.mySite.component.Utils.ServiceResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,10 +18,12 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService,AuthenticationManager authenticationManager) {
         this.userService = userService;
+        this.authenticationManager = authenticationManager;
     }
 
     @GetMapping("/")
@@ -49,10 +55,16 @@ public class UserController {
 
     @PostMapping("/user/login")
     public <T> ResponseEntity login(UsersDTO usersDTO, Model model) {
+
         ServiceResult<UsersDTO> result = userService.login(usersDTO);
         UsersDTO userDTO = result.getData();
 
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usersDTO.getUserId(), usersDTO.getPassword()));
+
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
         if(result.isSuccess()){
+
             model.addAttribute("userJwt", userDTO.getJwt());
             return ResponseEntity.ok().body(Map.of("success" , true, "redirect" , "/", "jwtToken", usersDTO.getJwt()));
         }else{
