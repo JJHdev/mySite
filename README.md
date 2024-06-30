@@ -24,11 +24,16 @@
   -. Workflow 파일은 YAML으로 작성되고, Github Repository의 .github/workflows 폴더 아래에 저장됨
 
 8. 회원 기능 구현하기.
-  -. 회원가입 기능 구현 (jpa 이용)
+  -. 회원가입 기능 구현 (JPA 이용)
     -. Exception을 직접 만들어 에러페이지로 이동하는게 아닌 각 유효성검사마다 원하는 설계대로 작성
     -. UserForm을 만들어 view에서 컨트롤러로 파라미터 받는 역할 만들고, User 도메인을 만들어 Service에서 UserForm에서 데이터를 받아 DB에 입력하도록 변경
     -. Email인증을 통해 보안성 강화 (implementation 'org.springframework.boot:spring-boot-starter-mail' 라이브러리를 이용해서 이메일 인증보냄)
-    -. 비밀번호를 SHA-256 적용예정
+    -. 비밀번호를 SHA-256 적용 완료
+
+9. 로그인 기능 구현하기 .JWT 이용
+    -. JWT이용하여 토큰 발행하여 로컬저장소에 저장은 완료함 Xss위험이 남아있어 이부분 수정할 예정
+    -. 로그인시 각 계정에 맞는 권한대로 수정하기.
+    -. 로그인 부분 좀더 보완하기.
 
 
 
