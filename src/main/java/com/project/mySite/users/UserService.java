@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -81,11 +82,9 @@ public class UserService {
 
         try{
             validateUserIdAndPassword(users);
-
             // Authenticate the user
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(users.getUserId(), users.getPassword())
-            );
+            Authentication authentication = authenticateUser(users);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
             String token = jwtUtil.createToken(authentication, 2*1000*60);
             usersDTO.setJwt(token);
@@ -102,6 +101,12 @@ public class UserService {
         } catch (Exception e) {
             return ServiceResult.failure("An unexpected error occurred: " + e.getMessage());
         }
+    }
+
+    private Authentication authenticateUser(Users users) throws AuthenticationException {
+        return authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(users.getUserId(), users.getPassword())
+        );
     }
 
     private Users UserDtoToUser(UsersDTO usersDTO){

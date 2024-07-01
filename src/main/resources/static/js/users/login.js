@@ -16,6 +16,8 @@ $(document).ready(function() {
 
         let formData = $(this).serialize(); // 폼 데이터 직렬화
 
+        console.log(formData);
+
         $.ajax({
             type: 'POST',
             url: $(this).attr('action'),

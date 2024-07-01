@@ -22,6 +22,7 @@ public class ContextPathInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         // 컨트롤러 실행 전에 모델에 contextPath 추가
         logger.info("Context Path: {}", request.getContextPath());
+        logger.info("Request URI: {}", request.getRequestURI()); // 요청 URI 로그 추가
         request.setAttribute("contextPath", request.getContextPath());
         return true;
     }

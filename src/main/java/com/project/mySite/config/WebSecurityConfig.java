@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -42,14 +43,13 @@ public class WebSecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/authenticate").permitAll() // 인증 엔드포인트는 누구나 접근 가능
-                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // CSS, JS, 이미지 파일은 누구나 접근 가능
+                        .requestMatchers("/user/login", "/user/register").permitAll() // 로그인 및 회원가입 경로 허용
+                        .requestMatchers("/css/**", "/img/**", "/js/**", "/scss/**", "/vendor/**").permitAll() // 정적 파일 접근 허용
                         .anyRequest().authenticated()
-                ).sessionManagement(sessionManagement ->
-                        sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                ).formLogin(formLogin ->
-                        formLogin.loginPage("/user/login").permitAll()
-                ).logout(LogoutConfigurer::permitAll);
+                )
+                .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .formLogin(AbstractHttpConfigurer::disable) // 기본 폼 로그인을 비활성화
+                .logout(LogoutConfigurer::permitAll);
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

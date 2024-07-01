@@ -59,13 +59,7 @@ public class UserController {
         ServiceResult<UsersDTO> result = userService.login(usersDTO);
         UsersDTO userDTO = result.getData();
 
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usersDTO.getUserId(), usersDTO.getPassword()));
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
         if(result.isSuccess()){
-
-            model.addAttribute("userJwt", userDTO.getJwt());
             return ResponseEntity.ok().body(Map.of("success" , true, "redirect" , "/", "jwtToken", usersDTO.getJwt()));
         }else{
             String errorMessage = result.getErrorMessage();
