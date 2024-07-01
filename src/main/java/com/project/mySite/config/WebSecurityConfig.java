@@ -1,5 +1,6 @@
 package com.project.mySite.config;
 
+import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.filter.JwtRequestFilter;
 import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.users.UserService;
@@ -27,27 +28,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 @EnableWebSecurity
 public class WebSecurityConfig {
 
-    private final JwtRequestFilter jwtRequestFilter;
     private final MyUserDetailsService myUserDetailsService;
+    private final JwtRequestFilter jwtRequestFilter;
 
-    public WebSecurityConfig(JwtRequestFilter jwtRequestFilter, MyUserDetailsService myUserDetailsService) {
-        this.jwtRequestFilter = jwtRequestFilter;
+    @Autowired
+    public WebSecurityConfig(MyUserDetailsService myUserDetailsService, JwtRequestFilter jwtRequestFilter) {
         this.myUserDetailsService = myUserDetailsService;
+        this.jwtRequestFilter = jwtRequestFilter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         http.csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/authenticate").permitAll() // 인증 엔드포인트는 누구나 접근 가능
+                        .requestMatchers("/css/**", "/js/**", "/images/**").permitAll() // CSS, JS, 이미지 파일은 누구나 접근 가능
                         .anyRequest().authenticated()
                 ).sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 ).formLogin(formLogin ->
-                        formLogin.loginPage("/").permitAll()
+                        formLogin.loginPage("/user/login").permitAll()
                 ).logout(LogoutConfigurer::permitAll);
-
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -67,12 +71,12 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public static PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+    @Autowired
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(myUserDetailsService).passwordEncoder(passwordEncoder());
     }
 }
