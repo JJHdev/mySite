@@ -16,8 +16,6 @@ $(document).ready(function() {
 
         let formData = $(this).serialize(); // 폼 데이터 직렬화
 
-        console.log(formData);
-
         $.ajax({
             type: 'POST',
             url: $(this).attr('action'),
@@ -25,7 +23,7 @@ $(document).ready(function() {
             success: function (data) {
                 if (data.success) {
                     localStorage.setItem('jwtToken', data.jwtToken); // JWT 토큰 저장
-                    window.location.href = data.redirect; // 페이지 이동
+                    window.location.href = contextPath + data.redirect; // 페이지 이동
                 } else {
                     alert(data.message); // 실패 메시지 표시
                 }

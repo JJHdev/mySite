@@ -1,6 +1,7 @@
 package com.project.mySite.users;
 
 import com.project.mySite.component.Utils.ServiceResult;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.io.IOException;
 import java.util.Map;
 
 @Controller
@@ -26,9 +28,16 @@ public class UserController {
         this.authenticationManager = authenticationManager;
     }
 
+
+
     @GetMapping("/")
     public String home(){
         return "index";
+    }
+
+    @GetMapping("/charts")
+    public String home2(){
+        return "charts";
     }
 
     @GetMapping("/user/register")
@@ -54,13 +63,14 @@ public class UserController {
     }
 
     @PostMapping("/user/login")
-    public <T> ResponseEntity login(UsersDTO usersDTO, Model model) {
+    public <T> ResponseEntity login(UsersDTO usersDTO, HttpServletResponse response) throws IOException {
 
         ServiceResult<UsersDTO> result = userService.login(usersDTO);
         UsersDTO userDTO = result.getData();
 
         if(result.isSuccess()){
-            return ResponseEntity.ok().body(Map.of("success" , true, "redirect" , "/", "jwtToken", usersDTO.getJwt()));
+            String jwtToken = result.getData().getJwt();
+            return ResponseEntity.ok().body(Map.of("success", true, "redirect", "/", "jwtToken", jwtToken));
         }else{
             String errorMessage = result.getErrorMessage();
             return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
