@@ -21,6 +21,7 @@ public class UsersDTO {
     private String profilePictureUrl;
     private String status = "ACTIVE";
     private LocalDateTime createDate = LocalDateTime.now();
-    private String jwt;
+    private String accessToken;
+    private String refreshToken;
 
 }

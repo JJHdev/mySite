@@ -2,6 +2,7 @@ package com.project.mySite.component.filter;
 
 import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.security.MyUserDetailsService;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,25 +37,55 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String requestPath = request.getRequestURI();
         System.out.println("Request Path: " + requestPath);
 
-        String jwt = null;
+        String accessToken = null;
+        String refreshToken = null;
         String username = null;
 
         // Get JWT from cookies
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
-                if ("jwtToken".equals(cookie.getName())) {
-                    jwt = cookie.getValue();
-                    username = jwtUtil.extractUsername(jwt);
-                    break;
+                if ("accessToken".equals(cookie.getName())) {
+                    accessToken = cookie.getValue();
+                } else if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
                 }
+            }
+        }
+
+        accessToken이 만료되어서 refreshToken 재발급이 안됨
+        
+        if (accessToken != null) {
+            try {
+                username = jwtUtil.extractUsername(accessToken);
+            } catch (ExpiredJwtException e) {
+                System.out.println("Access token has expired: " + e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Invalid access token: " + e.getMessage());
+                invalidateCookie(response, "accessToken");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid access token. Please login again.");
+                return;
             }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(username);
 
-            if (jwtUtil.isTokenExpired(jwt)) {
-                throw new RuntimeException("토큰이 만료되었습니다.");
+            if (jwtUtil.isTokenExpired(accessToken)) {
+                if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
+
+                    String newAccessToken = jwtUtil.generateAccessToken(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+                    Cookie newAccessTokenCookie = new Cookie("accessToken", newAccessToken);
+                    newAccessTokenCookie.setHttpOnly(true);
+                    newAccessTokenCookie.setSecure(true);
+                    newAccessTokenCookie.setPath("/");
+                    newAccessTokenCookie.setMaxAge(10); // 10초
+                    response.addCookie(newAccessTokenCookie);
+
+                } else {
+                    invalidateCookie(response, "refreshToken");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token has expired. Please login again.");
+                    return;
+                }
             }
 
             if (userDetails != null) {
@@ -65,7 +96,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         // 로그인 및 회원가입 경로를 예외 처리
-        if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
+         if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
             if (username != null && SecurityContextHolder.getContext().getAuthentication() != null) {
                 // 사용자가 이미 로그인된 경우
                 response.sendRedirect("/");
@@ -78,5 +109,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         }
 
         chain.doFilter(request, response);
+    }
+
+    private void invalidateCookie(HttpServletResponse response, String cookieName) {
+        Cookie cookie = new Cookie(cookieName, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 }

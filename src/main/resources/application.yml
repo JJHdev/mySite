@@ -51,6 +51,8 @@ server:
 
 jwt:
   secret: askdjnaskjdkjsdasdfvfvhjtwrfbqkwjbekjqwbehjqwbejhqwbejhqwebjhwqebjhqwbejhqwbejhbqwehjbfjhbqjfhqaskdnsadnkjf
+  acessExp: 1800000 # 30 * 60 * 1000 밀리초 (30분)
+  refreshExp : 180000000
 
 logging:
   level:

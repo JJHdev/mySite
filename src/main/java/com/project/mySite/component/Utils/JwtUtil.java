@@ -21,49 +21,51 @@ public class JwtUtil {
 
     @Value("${jwt.secret}")
     private String secretKey;
-
-
-    public String createToken(Authentication authentication, long expTime){
-        if(expTime <= 0){
-            throw new RuntimeException("만료시간이 0보다 작습니다.");
-        }
-
-        SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-        byte[] secretKeyBytes = Base64.getDecoder().decode(secretKey);
-        Key signingKey = new SecretKeySpec(secretKeyBytes, signatureAlgorithm.getJcaName());
-
-        return Jwts.builder()
-                .setSubject(authentication.getName())
-                .signWith(signingKey, signatureAlgorithm)
-                .setExpiration(Date.from(Instant.now().plusMillis(expTime)))
-                .compact();
-    }
+    @Value("${jwt.acessExp}")
+    private long ACESS_TOKEN_TIME;
+    @Value("${jwt.refreshExp}")
+    private long REFRESH_TOKEN_TIME;
 
     private Key getSigningKey() {
         byte[] keyBytes = Base64.getDecoder().decode(secretKey);
         return new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
     }
 
-    public String extractUsername(String token) {
-        Key signingKey = getSigningKey();
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(signingKey)
+    public String generateAccessToken(Authentication authentication) {
+        return generateToken(authentication, ACESS_TOKEN_TIME);
+    }
+
+    public String generateRefreshToken(Authentication authentication) {
+        return generateToken(authentication, REFRESH_TOKEN_TIME);
+    }
+
+    private String generateToken(Authentication authentication, long validity) {
+        return Jwts.builder()
+                .setSubject(authentication.getName())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + validity))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    private Claims getClaimsFromToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
 
-        return claims.getSubject();
+    public String extractUsername(String token) {
+        return getClaimsFromToken(token).getSubject();
+    }
+
+    public Date extractExpiration(String token) {
+        return getClaimsFromToken(token).getExpiration();
     }
 
     public boolean isTokenExpired(String token) {
-        Key signingKey = getSigningKey();
-        return Jwts.parserBuilder()
-                .setSigningKey(signingKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getExpiration()
-                .before(new Date());
+        return getClaimsFromToken(token).getExpiration().before(new Date());
     }
 
 }

@@ -7,6 +7,7 @@ import com.project.mySite.component.exception.ValidationUserException;
 import com.project.mySite.email.EmailRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -82,14 +83,18 @@ public class UserService {
 
         try{
             validateUserIdAndPassword(users);
+
             // Authenticate the user
             Authentication authentication = authenticateUser(users);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            String token = jwtUtil.createToken(authentication, 2*1000*60);
-            usersDTO.setJwt(token);
+            String accessToken = jwtUtil.generateAccessToken(authentication);
+            String refreshToken = jwtUtil.generateRefreshToken(authentication);
 
-            if(usersDTO.getJwt() == null || usersDTO.getJwt().isEmpty()) {
+            usersDTO.setAccessToken(accessToken);
+            usersDTO.setRefreshToken(refreshToken);
+
+            if(usersDTO.getAccessToken() == null || usersDTO.getAccessToken().isEmpty() ||  usersDTO.getRefreshToken() == null || usersDTO.getRefreshToken().isEmpty() ) {
                 throw new ValidationUserException("로그인에 실패하였습니다. 관리자에게 문의해주시길 바랍니다.");
             }
 

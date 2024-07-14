@@ -1,7 +1,10 @@
 package com.project.mySite.users;
 
+import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.Utils.ServiceResult;
+import com.project.mySite.component.security.MyUserDetailsService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,11 +26,15 @@ public class UserController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
+    private final MyUserDetailsService myUserDetailsService;
 
     @Autowired
-    public UserController(UserService userService,AuthenticationManager authenticationManager) {
+    public UserController(UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
+        this.myUserDetailsService = myUserDetailsService;
     }
 
 
@@ -70,14 +78,12 @@ public class UserController {
         UsersDTO userDTO = result.getData();
 
         if(result.isSuccess()){
-            String jwtToken = result.getData().getJwt();
+            String accessToken = userDTO.getAccessToken();
+            String refreshToken = userDTO.getRefreshToken();
+
             // Set JWT in cookie
-            Cookie cookie = new Cookie("jwtToken", jwtToken);
-            cookie.setHttpOnly(true); // Prevents JavaScript from accessing the cookie
-            cookie.setSecure(true); // Ensures the cookie is sent over HTTPS only
-            cookie.setPath("/"); // Ensures the cookie is accessible throughout your application
-            cookie.setMaxAge(24 * 60 * 60); // Set cookie expiration time, e.g., 1 day
-            response.addCookie(cookie);
+            addCookie(response, "accessToken", accessToken, 10); // 10초
+            addCookie(response, "refreshToken", refreshToken, 30 * 60); // 30분
 
             return ResponseEntity.ok().body(Map.of("success", true, "redirect", "/"));
         }else{
@@ -98,6 +104,48 @@ public class UserController {
             String errorMessage = result.getErrorMessage();
             return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
         }
+    }
+
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAge);
+        response.addCookie(cookie);
+    }
+
+    @PostMapping("/refresh")
+    public void refresh(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String refreshToken = null;
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
+            }
+        }
+
+        if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
+            String username = jwtUtil.extractUsername(refreshToken);
+            UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
+            String newAccessToken = jwtUtil.generateAccessToken(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+
+            addCookie(response, "accessToken", newAccessToken, 10); // 10초
+        } else {
+            invalidateCookie(response, "refreshToken");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token has expired. Please login again.");
+        }
+    }
+
+    private void invalidateCookie(HttpServletResponse response, String cookieName) {
+        Cookie cookie = new Cookie(cookieName, null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
 }
