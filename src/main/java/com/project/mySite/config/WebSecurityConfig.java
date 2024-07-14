@@ -43,7 +43,7 @@ public class WebSecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/user/login", "/user/register", "/user/checkUser", "/email/send", "/email/verify" , "/" ).permitAll() // 로그인 및 회원가입 경로 허용
+                        .requestMatchers("/user/login", "/user/register", "/user/checkUser", "/email/send", "/email/verify" ).permitAll() // 로그인 및 회원가입 경로 허용
                         .requestMatchers("/css/**", "/img/**", "/js/**", "/scss/**", "/vendor/**", "/favicon.ico").permitAll() // 정적 파일 접근 허용
                         .anyRequest().authenticated()
                 )

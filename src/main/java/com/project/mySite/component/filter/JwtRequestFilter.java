@@ -2,6 +2,7 @@ package com.project.mySite.component.filter;
 
 import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.security.MyUserDetailsService;
+import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,21 +36,18 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String requestPath = request.getRequestURI();
         System.out.println("Request Path: " + requestPath);
 
-        // 로그인 및 회원가입 경로를 예외 처리
-        if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
-            System.out.println("Skipping JWT filter for path: " + requestPath);
-            chain.doFilter(request, response);
-            return;
-        }
-
-        final String authorizationHeader = request.getHeader("Authorization");
-
-        String username = null;
         String jwt = null;
+        String username = null;
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            jwt = authorizationHeader.substring(7);
-            username = jwtUtil.extractUsername(jwt);
+        // Get JWT from cookies
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("jwtToken".equals(cookie.getName())) {
+                    jwt = cookie.getValue();
+                    username = jwtUtil.extractUsername(jwt);
+                    break;
+                }
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -65,6 +63,20 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
             }
         }
+
+        // 로그인 및 회원가입 경로를 예외 처리
+        if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() != null) {
+                // 사용자가 이미 로그인된 경우
+                response.sendRedirect("/");
+                return;
+            }else {
+                System.out.println("Skipping JWT filter for path: " + requestPath);
+                chain.doFilter(request, response);
+                return;
+            }
+        }
+
         chain.doFilter(request, response);
     }
 }

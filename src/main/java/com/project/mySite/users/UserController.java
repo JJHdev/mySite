@@ -1,6 +1,7 @@
 package com.project.mySite.users;
 
 import com.project.mySite.component.Utils.ServiceResult;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +71,15 @@ public class UserController {
 
         if(result.isSuccess()){
             String jwtToken = result.getData().getJwt();
-            return ResponseEntity.ok().body(Map.of("success", true, "redirect", "/", "jwtToken", jwtToken));
+            // Set JWT in cookie
+            Cookie cookie = new Cookie("jwtToken", jwtToken);
+            cookie.setHttpOnly(true); // Prevents JavaScript from accessing the cookie
+            cookie.setSecure(true); // Ensures the cookie is sent over HTTPS only
+            cookie.setPath("/"); // Ensures the cookie is accessible throughout your application
+            cookie.setMaxAge(24 * 60 * 60); // Set cookie expiration time, e.g., 1 day
+            response.addCookie(cookie);
+
+            return ResponseEntity.ok().body(Map.of("success", true, "redirect", "/"));
         }else{
             String errorMessage = result.getErrorMessage();
             return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
