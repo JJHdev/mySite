@@ -51,8 +51,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }
             }
         }
-
-        accessToken이 만료되어서 refreshToken 재발급이 안됨
         
         if (accessToken != null) {
             try {
