@@ -57,6 +57,29 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 username = jwtUtil.extractUsername(accessToken);
             } catch (ExpiredJwtException e) {
                 System.out.println("Access token has expired: " + e.getMessage());
+
+                // Access token이 만료된 경우, refresh token을 사용해 새로운 access token 발행 로직으로 넘어감
+                if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
+
+                    username = jwtUtil.extractUsername(refreshToken); // refreshToken으로부터 username 추출
+                    UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(username);
+                    String newAccessToken = jwtUtil.generateAccessToken(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+                    Cookie newAccessTokenCookie = new Cookie("accessToken", newAccessToken);
+                    newAccessTokenCookie.setHttpOnly(true);
+                    newAccessTokenCookie.setSecure(true);
+                    newAccessTokenCookie.setPath("/");
+                    newAccessTokenCookie.setMaxAge(10); // 10초
+                    response.addCookie(newAccessTokenCookie);
+
+                    // 새로운 accessToken으로 username을 추출하고 이후 로직을 진행할 수 있도록 함
+                    username = jwtUtil.extractUsername(newAccessToken);
+                } else {
+                    invalidateCookie(response, "accessToken");
+                    invalidateCookie(response, "refreshToken");
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token has expired. Please login again.");
+                    return;
+                }
+
             } catch (Exception e) {
                 System.out.println("Invalid access token: " + e.getMessage());
                 invalidateCookie(response, "accessToken");
@@ -67,24 +90,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(username);
-
-            if (jwtUtil.isTokenExpired(accessToken)) {
-                if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
-
-                    String newAccessToken = jwtUtil.generateAccessToken(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
-                    Cookie newAccessTokenCookie = new Cookie("accessToken", newAccessToken);
-                    newAccessTokenCookie.setHttpOnly(true);
-                    newAccessTokenCookie.setSecure(true);
-                    newAccessTokenCookie.setPath("/");
-                    newAccessTokenCookie.setMaxAge(10); // 10초
-                    response.addCookie(newAccessTokenCookie);
-
-                } else {
-                    invalidateCookie(response, "refreshToken");
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token has expired. Please login again.");
-                    return;
-                }
-            }
 
             if (userDetails != null) {
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -105,7 +110,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 return;
             }
         }
-
         chain.doFilter(request, response);
     }
 
