@@ -40,34 +40,31 @@ public class JwtUtil {
     @Value("${jwt.refreshExp}")
     private long REFRESH_TOKEN_TIME;
 
-    private final AuthenticationManager authenticationManager;
-
-    @Autowired
-    public JwtUtil(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
-    }
-
     private Key getSigningKey() {
         byte[] keyBytes = Base64.getDecoder().decode(secretKey);
         return new SecretKeySpec(keyBytes, SignatureAlgorithm.HS256.getJcaName());
     }
 
-    public String generateAccessToken(Users users) {
-        // Authenticate the user
-        Authentication authentication = authenticateAndSetContext(users);
-        return generateToken(authentication, ACESS_TOKEN_TIME);
-    }
-
-    // 새로운 UserDetails 객체를 기반으로 Access Token 생성
     public String generateAccessToken(UserDetails userDetails) {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        return generateToken(authentication, ACESS_TOKEN_TIME);
+        Map<String, Object> claims = new HashMap<>();
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + ACESS_TOKEN_TIME))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
-    public String generateRefreshToken(Users users) {
-        // Authenticate the user
-        Authentication authentication = authenticateAndSetContext(users);
-        return generateToken(authentication, REFRESH_TOKEN_TIME);
+    public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_TIME))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 
     private String generateToken(Authentication authentication, long validity) {
@@ -104,12 +101,6 @@ public class JwtUtil {
     public boolean validateToken(String token, UserDetails userDetails) {
         final String userId = getExtractUserId(token);
         return (userId.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    }
-
-    private Authentication authenticateAndSetContext(Users users) throws AuthenticationException {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(users.getUserId(), users.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        return authentication;
     }
 
     public void setAuthentication(UserDetails userDetails, HttpServletRequest request) {

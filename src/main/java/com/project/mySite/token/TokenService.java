@@ -1,10 +1,12 @@
 package com.project.mySite.token;
 
 import com.project.mySite.component.Utils.JwtUtil;
+import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.users.Users;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,11 +34,11 @@ public class TokenService {
         this.jwtUtil = jwtUtil;
     }
 
-    public Token createRefreshToken(Users users) {
-        String refreshToken = jwtUtil.generateRefreshToken(users);
+    public Token createRefreshToken(UserDetails userDetails) {
+        String refreshToken = jwtUtil.generateRefreshToken(userDetails);
         LocalDateTime expirationTime = LocalDateTime.now().plusSeconds(REFRESH_TOKEN_TIME / 1000);
         Token token = Token.builder()
-                .userId(users.getUserId())
+                .userId(userDetails.getUsername())
                 .token(refreshToken)
                 .expiration(expirationTime)
                 .build();

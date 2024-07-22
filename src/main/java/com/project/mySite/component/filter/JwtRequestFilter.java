@@ -46,6 +46,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
     }
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        // 정적 리소스와 로그인/회원가입 경로를 필터링하지 않음
+        return path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/img") ||
+                path.startsWith("/vendor") || path.startsWith("/favicon.ico");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
@@ -72,7 +79,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
 
-
         // 로그인 및 회원가입 경로를 예외 처리
         if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
             if (SecurityContextHolder.getContext().getAuthentication() != null) {
@@ -95,6 +101,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
                 // refreshToken이 있는지?? null인지 유무 판단하며 만료되었을 경우 삭제 조치
                 if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
+
                     // refreshToken으로부터 userId 추출 및 accessToken 재발급
                     userId = jwtUtil.getExtractUserId(refreshToken);
                     UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(userId);

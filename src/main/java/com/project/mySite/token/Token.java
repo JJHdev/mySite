@@ -7,9 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @Getter
 @Setter
@@ -20,9 +18,9 @@ public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "token_seq")
     @SequenceGenerator(name = "token_seq", sequenceName = "token_seq", allocationSize = 1)
-    @Column(name = "tokenId", unique = true, nullable = false)
+    @Column(name = "token_Id", unique = true, nullable = false)
     private Long tokenId;
-    @Column(name = "userId", nullable = false, unique = true)
+    @Column(name = "user_Id", nullable = false, unique = true)
     private String userId;
     @Column(name = "token", nullable = false)
     private String token;

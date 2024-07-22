@@ -4,6 +4,7 @@ import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.Utils.ServiceResult;
 import com.project.mySite.component.Utils.Utils;
 import com.project.mySite.component.exception.ValidationUserException;
+import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.email.EmailRepository;
 import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
@@ -15,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,17 +29,17 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    private final AuthenticationManager authenticationManager;
     private final EmailRepository emailRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final MyUserDetailsService myUserDetailsService;
 
     @Autowired
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager,
-                       EmailRepository emailRepository, PasswordEncoder passwordEncoder,TokenService tokenService) {
+    public UserService(MyUserDetailsService myUserDetailsService, UserRepository userRepository, JwtUtil jwtUtil,
+                       EmailRepository emailRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
+        this.myUserDetailsService = myUserDetailsService;
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
-        this.authenticationManager = authenticationManager;
         this.emailRepository = emailRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService  = tokenService;
@@ -84,14 +86,15 @@ public class UserService {
     public ServiceResult<UsersDTO> login(UsersDTO usersDTO) {
         //UserDTO to user
         Users users = UserDtoToUser(usersDTO);
+        UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(users.getUserId());
 
         try{
             validateUserIdAndPassword(users);
 
             // 로컬스토리지에 보낼 단순한 access토큰용 생성
-            String accessToken = jwtUtil.generateAccessToken(users);
+            String accessToken = jwtUtil.generateAccessToken(userDetails);
             // DB에 refreshToken을 저장하고 쿠키에 저장할 용도
-            Token saveRefreshToken = tokenService.createRefreshToken(users);
+            Token saveRefreshToken = tokenService.createRefreshToken(userDetails);
 
             usersDTO.setAccessToken(accessToken);
             usersDTO.setRefreshToken(saveRefreshToken.getToken());
