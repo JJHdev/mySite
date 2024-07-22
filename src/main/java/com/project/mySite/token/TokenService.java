@@ -9,10 +9,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Optional;
 
 @Transactional
 @Service
 public class TokenService {
+
     @Value("${jwt.secret}")
     private String secretKey;
     @Value("${jwt.acessExp}")
@@ -21,42 +23,46 @@ public class TokenService {
     private long REFRESH_TOKEN_TIME;
 
     private final TokenRepository tokenRepository;
+    private final JwtUtil jwtUtil;
+
 
     @Autowired
-    public TokenService(TokenRepository tokenRepository) {
+    public TokenService(TokenRepository tokenRepository, JwtUtil jwtUtil) {
         this.tokenRepository = tokenRepository;
+        this.jwtUtil = jwtUtil;
     }
 
     public Token createRefreshToken(Users users) {
-        JwtUtil jwtUtil = new JwtUtil();
-
         String refreshToken = jwtUtil.generateRefreshToken(users);
-
         LocalDateTime expirationTime = LocalDateTime.now().plusSeconds(REFRESH_TOKEN_TIME / 1000);
-
         Token token = Token.builder()
                 .userId(users.getUserId())
                 .token(refreshToken)
                 .expiration(expirationTime)
                 .build();
-
-        return refreshTokenRepository.save(refreshToken);
+        return tokenRepository.save(token);
     }
 
-    public Optional<RefreshToken> verifyExpiration(RefreshToken token) {
-        if (token.getExpiryDate().before(new Date())) {
-            refreshTokenRepository.delete(token);
+    public void deleteByUserId(String userId) {
+        tokenRepository.deleteByUserId(userId);
+    }
+
+    public Optional<Token> findByToken(String token) {
+        return tokenRepository.findByToken(token);
+    }
+
+    public Optional<Token> verifyExpiration(Token token) {
+        if (token.getExpiration().isBefore(LocalDateTime.now())) {
+            tokenRepository.delete(token);
             return Optional.empty();
         }
         return Optional.of(token);
     }
 
-    public void deleteByUsername(String username) {
-        refreshTokenRepository.deleteByUsername(username);
+    public Optional<Token> getTokenFromJwt(String refreshToken) {
+        String userId = jwtUtil.getExtractUserId(refreshToken);
+        return tokenRepository.findByUserIdAndToken(userId, refreshToken);
     }
 
-    public Optional<RefreshToken> findByToken(String token) {
-        return refreshTokenRepository.findByToken(token);
-    }
 
 }

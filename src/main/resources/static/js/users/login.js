@@ -22,7 +22,7 @@ $(document).ready(function() {
             data: formData,
             success: function (data) {
                 if (data.success) {
-                    localStorage.setItem('jwtToken', data.jwtToken); // JWT 토큰 저장
+                    localStorage.setItem('accessToken', data.accessToken); // JWT 토큰 저장
                     window.location.href = contextPath + data.redirect; // 페이지 이동
                 } else {
                     alert(data.message); // 실패 메시지 표시

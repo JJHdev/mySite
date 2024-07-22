@@ -5,6 +5,8 @@ import com.project.mySite.component.Utils.ServiceResult;
 import com.project.mySite.component.Utils.Utils;
 import com.project.mySite.component.exception.ValidationUserException;
 import com.project.mySite.email.EmailRepository;
+import com.project.mySite.token.Token;
+import com.project.mySite.token.TokenService;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,15 +30,17 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
     private final EmailRepository emailRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenService tokenService;
 
     @Autowired
     public UserService(UserRepository userRepository, JwtUtil jwtUtil, AuthenticationManager authenticationManager,
-                       EmailRepository emailRepository, PasswordEncoder passwordEncoder) {
+                       EmailRepository emailRepository, PasswordEncoder passwordEncoder,TokenService tokenService) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
         this.emailRepository = emailRepository;
         this.passwordEncoder = passwordEncoder;
+        this.tokenService  = tokenService;
     }
 
     public ServiceResult<Users> register(UsersDTO usersDTO){
@@ -84,15 +88,13 @@ public class UserService {
         try{
             validateUserIdAndPassword(users);
 
-            // Authenticate the user
-            Authentication authentication = authenticateUser(users);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            String accessToken = jwtUtil.generateAccessToken(authentication);
-            String refreshToken = jwtUtil.generateRefreshToken(authentication);
+            // 로컬스토리지에 보낼 단순한 access토큰용 생성
+            String accessToken = jwtUtil.generateAccessToken(users);
+            // DB에 refreshToken을 저장하고 쿠키에 저장할 용도
+            Token saveRefreshToken = tokenService.createRefreshToken(users);
 
             usersDTO.setAccessToken(accessToken);
-            usersDTO.setRefreshToken(refreshToken);
+            usersDTO.setRefreshToken(saveRefreshToken.getToken());
 
             if(usersDTO.getAccessToken() == null || usersDTO.getAccessToken().isEmpty() ||  usersDTO.getRefreshToken() == null || usersDTO.getRefreshToken().isEmpty() ) {
                 throw new ValidationUserException("로그인에 실패하였습니다. 관리자에게 문의해주시길 바랍니다.");
@@ -106,12 +108,6 @@ public class UserService {
         } catch (Exception e) {
             return ServiceResult.failure("An unexpected error occurred: " + e.getMessage());
         }
-    }
-
-    private Authentication authenticateUser(Users users) throws AuthenticationException {
-        return authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(users.getUserId(), users.getPassword())
-        );
     }
 
     private Users UserDtoToUser(UsersDTO usersDTO){

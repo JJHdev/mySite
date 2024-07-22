@@ -7,6 +7,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +24,9 @@ import java.util.Map;
 
 @Controller
 public class UserController {
+
+    @Value("${jwt.refreshExp}")
+    private long REFRESH_TOKEN_TIME;
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
@@ -78,17 +82,10 @@ public class UserController {
         UsersDTO userDTO = result.getData();
 
         if(result.isSuccess()){
-            String accessToken = userDTO.getAccessToken();
-            String refreshToken = userDTO.getRefreshToken();
-
-            // Set JWT in cookie
-            addCookie(response, "accessToken", accessToken, 10); // 10초
-            addCookie(response, "refreshToken", refreshToken, 30 * 60); // 30분
-
-            return ResponseEntity.ok().body(Map.of("success", true, "redirect", "/"));
+            addCookie(response, "refreshToken", userDTO.getRefreshToken(), (int) REFRESH_TOKEN_TIME / 1000); // 30분
+            return ResponseEntity.ok().body(Map.of("success", true,"redirect", "/","accessToken", userDTO.getAccessToken()));
         }else{
-            String errorMessage = result.getErrorMessage();
-            return ResponseEntity.ok().body(Map.of("success", false, "message", errorMessage));
+            return ResponseEntity.ok().body(Map.of("success", false, "message", result.getErrorMessage()));
         }
     }
 
@@ -128,9 +125,9 @@ public class UserController {
         }
 
         if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
-            String username = jwtUtil.extractUsername(refreshToken);
+            String username = jwtUtil.getExtractUserId(refreshToken);
             UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
-            String newAccessToken = jwtUtil.generateAccessToken(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
+            String newAccessToken = jwtUtil.generateAccessToken(userDetails);
 
             addCookie(response, "accessToken", newAccessToken, 10); // 10초
         } else {
