@@ -56,6 +56,7 @@ public class TokenController {
                 // 새로운 Access Token을 JSON 응답으로 추가
                 response.setContentType("application/json");
                 response.getWriter().write("{\"accessToken\": \"" + newAccessToken + "\"}");
+                response.setStatus(HttpServletResponse.SC_OK);
 
                 // 토큰 spring 보안추가 및 저장
                 jwtUtil.setAuthentication(userDetails,request);
@@ -63,12 +64,12 @@ public class TokenController {
             } else {
                 // RefreshToken이 유효하지 않을 경우
                 invalidateCookie(response, "refreshToken");
-                response.sendRedirect("/user/login");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
         } else {
             // RefreshToken이 유효하지 않을 경우
             invalidateCookie(response, "refreshToken");
-            response.sendRedirect("/user/login");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         }
     }
 

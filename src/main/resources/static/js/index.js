@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     let accessToken  = localStorage.getItem('accessToken');
-    console.log(accessToken );
+    console.log(accessToken);
 
     if (!accessToken) {
         // Access Token이 없는 경우 Refresh Token을 사용하여 새로운 Access Token 발급 시도
@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => {
                 console.error('Failed to refresh access token:', error);
                 alert('No valid token found, redirecting to login page.');
-                window.location.href = '/user/login';
             });
     } else {
         // Access Token이 있는 경우 API 요청 수행

@@ -1,40 +1,26 @@
 package com.project.mySite.component.filter;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
-
-    @Value("${jwt.secret}")
-    private String secretKey;
-    @Value("${jwt.acessExp}")
-    private long ACESS_TOKEN_TIME;
-    @Value("${jwt.refreshExp}")
-    private long REFRESH_TOKEN_TIME;
 
     private final MyUserDetailsService myUserDetailsService;
     private final JwtUtil jwtUtil;
@@ -46,12 +32,15 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
     }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
-        // 정적 리소스와 로그인/회원가입 경로를 필터링하지 않음
+        // 정적 리소스 경로 및 로그인/회원가입 경로를 필터링하지 않음
         return path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/img") ||
-                path.startsWith("/vendor") || path.startsWith("/favicon.ico");
+                path.startsWith("/vendor") || path.startsWith("/favicon.ico") ||
+                path.startsWith("/static/css") || path.startsWith("/static/js") ||
+                path.startsWith("/static/img") || path.startsWith("/static/vendor") || path.startsWith("refresh-token");
     }
 
     @Override
@@ -72,24 +61,21 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // refreshToken 쿠키에서 추출
         if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
+                     for (Cookie cookie : request.getCookies()) {
                 if ("refreshToken".equals(cookie.getName())) {
                     refreshToken = cookie.getValue();
                 }
             }
         }
 
-        // 로그인 및 회원가입 경로를 예외 처리
-        if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                // 사용자가 이미 로그인된 경우
-                response.sendRedirect("/");
-                return;
-            } else {
-                System.out.println("Skipping JWT filter for path: " + requestPath);
-                chain.doFilter(request, response);
-                return;
+        if (refreshToken != null) {
+            System.out.println("Refresh Token is not null");
+             Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
+            if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
+                System.out.println("Refresh Token is present and valid");
             }
+           } else {
+            System.out.println("Refresh Token is invalid or expired");
         }
 
         // accessToken이 없거나, 인증 만료되었을 경우
@@ -97,10 +83,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
             // Access token이 만료된 경우, refresh token을 사용해 새로운 access token 발행 로직으로 넘어감
             if (refreshToken != null) {
-                Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
+                  Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
 
                 // refreshToken이 있는지?? null인지 유무 판단하며 만료되었을 경우 삭제 조치
-                if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
+                 if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
 
                     // refreshToken으로부터 userId 추출 및 accessToken 재발급
                     userId = jwtUtil.getExtractUserId(refreshToken);
@@ -116,13 +102,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 }else{
                     // RefreshToken이 유효하지 않을 경우
                     invalidateCookie(response, "refreshToken");
-                    response.sendRedirect("/user/login");
+                    chain.doFilter(request, response);
                     return;
                 }
             } else {
                 // RefreshToken이 유효하지 않을 경우
                 invalidateCookie(response, "refreshToken");
-                response.sendRedirect("/user/login");
+                chain.doFilter(request, response);
                 return;
             }
             
@@ -138,6 +124,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 if (jwtUtil.validateToken(accessToken, userDetails)) {
                     jwtUtil.setAuthentication(userDetails,request);
                 }
+            }
+        }
+        // 로그인 및 회원가입 경로를 예외 처리
+        if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
+            if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                // 사용자가 이미 로그인된 경우
+                response.sendRedirect("/");
+                return;
+            } else {
+                response.sendRedirect(requestPath);
+                return;
             }
         }
         chain.doFilter(request, response);
