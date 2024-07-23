@@ -8,6 +8,7 @@ import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.email.EmailRepository;
 import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,17 +33,17 @@ public class UserService {
     private final EmailRepository emailRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
-    private final MyUserDetailsService myUserDetailsService;
+    private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public UserService(MyUserDetailsService myUserDetailsService, UserRepository userRepository, JwtUtil jwtUtil,
-                       EmailRepository emailRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
-        this.myUserDetailsService = myUserDetailsService;
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil,
+                       EmailRepository emailRepository, PasswordEncoder passwordEncoder, TokenService tokenService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.emailRepository = emailRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService  = tokenService;
+        this.authenticationManager = authenticationManager;
     }
 
     public ServiceResult<Users> register(UsersDTO usersDTO){
@@ -83,21 +84,24 @@ public class UserService {
         }
     }
 
-    public ServiceResult<UsersDTO> login(UsersDTO usersDTO) {
+    public ServiceResult<UsersDTO> login(UsersDTO usersDTO, HttpServletRequest request) {
+
         //UserDTO to user
         Users users = UserDtoToUser(usersDTO);
-        UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(users.getUserId());
 
         try{
             validateUserIdAndPassword(users);
 
-            // 로컬스토리지에 보낼 단순한 access토큰용 생성
-            String accessToken = jwtUtil.generateAccessToken(userDetails);
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usersDTO.getUserId(), usersDTO.getPassword()));
+
+            String accessToken = jwtUtil.generateAccessToken(authentication);
             // DB에 refreshToken을 저장하고 쿠키에 저장할 용도
-            Token saveRefreshToken = tokenService.createRefreshToken(userDetails);
+            Token saveRefreshToken = tokenService.createRefreshToken(authentication);
 
             usersDTO.setAccessToken(accessToken);
             usersDTO.setRefreshToken(saveRefreshToken.getToken());
+
+            jwtUtil.setAuthentication(accessToken,request);
 
             if(usersDTO.getAccessToken() == null || usersDTO.getAccessToken().isEmpty() ||  usersDTO.getRefreshToken() == null || usersDTO.getRefreshToken().isEmpty() ) {
                 throw new ValidationUserException("로그인에 실패하였습니다. 관리자에게 문의해주시길 바랍니다.");

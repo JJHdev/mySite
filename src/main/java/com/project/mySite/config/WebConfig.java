@@ -15,6 +15,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(contextPathInterceptor)
-                .addPathPatterns("/**"); // 모든 경로에 인터셉터 적용
+                .addPathPatterns("/**") // 모든 경로에 인터셉터 적용
+                .excludePathPatterns("/css/**", "/img/**", "/js/**", "/scss/**", "/vendor/**"); // 정적 파일 제외
     }
 }

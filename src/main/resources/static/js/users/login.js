@@ -21,14 +21,15 @@ $(document).ready(function() {
             url: $(this).attr('action'),
             data: formData,
             success: function (data) {
+                debugger;
                 if (data.success) {
-                    localStorage.setItem('accessToken', data.accessToken); // JWT 토큰 저장
                     window.location.href = contextPath + data.redirect; // 페이지 이동
                 } else {
                     alert(data.message); // 실패 메시지 표시
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
+                debugger;
                 alert('Registration failed. Please try again.');
                 console.error('Error:', errorThrown);
             }

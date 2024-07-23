@@ -6,6 +6,7 @@ import com.project.mySite.users.Users;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -34,11 +35,13 @@ public class TokenService {
         this.jwtUtil = jwtUtil;
     }
 
-    public Token createRefreshToken(UserDetails userDetails) {
-        String refreshToken = jwtUtil.generateRefreshToken(userDetails);
+    public Token createRefreshToken(Authentication authentication) {
+
+        String refreshToken = jwtUtil.generateRefreshToken(authentication);
         LocalDateTime expirationTime = LocalDateTime.now().plusSeconds(REFRESH_TOKEN_TIME / 1000);
+
         Token token = Token.builder()
-                .userId(userDetails.getUsername())
+                .userId(authentication.getName())
                 .token(refreshToken)
                 .expiration(expirationTime)
                 .build();

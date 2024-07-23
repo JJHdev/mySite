@@ -19,18 +19,13 @@ import java.io.IOException;
 import java.util.Optional;
 
 
-@Component
+
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private final MyUserDetailsService myUserDetailsService;
     private final JwtUtil jwtUtil;
-    private final TokenService tokenService;
 
-    @Autowired
-    public JwtRequestFilter(MyUserDetailsService myUserDetailsService, JwtUtil jwtUtil,TokenService tokenService) {
-        this.myUserDetailsService = myUserDetailsService;
+    public JwtRequestFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
-        this.tokenService = tokenService;
     }
 
     @Override
@@ -38,14 +33,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         // 정적 리소스 경로 및 로그인/회원가입 경로를 필터링하지 않음
         return path.startsWith("/css") || path.startsWith("/js") || path.startsWith("/img") ||
-                path.startsWith("/vendor") || path.startsWith("/favicon.ico") ||
+                path.startsWith("/vendor")     || path.startsWith("/favicon.ico") ||
                 path.startsWith("/static/css") || path.startsWith("/static/js") ||
                 path.startsWith("/static/img") || path.startsWith("/static/vendor") || path.startsWith("refresh-token");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-
         String requestPath = request.getRequestURI();
         System.out.println("Request Path: " + requestPath);
 
@@ -53,20 +47,18 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         String refreshToken = null;
         String userId = null;
 
-        // access토큰 로컬 스토리지에서 추출
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            accessToken = authHeader.substring(7);
-        }
-
         // refreshToken 쿠키에서 추출
         if (request.getCookies() != null) {
-                     for (Cookie cookie : request.getCookies()) {
-                if ("refreshToken".equals(cookie.getName())) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    accessToken = cookie.getValue();
+                } else if ("refreshToken".equals(cookie.getName())) {
                     refreshToken = cookie.getValue();
                 }
             }
         }
+
+        /*
 
         if (refreshToken != null) {
             System.out.println("Refresh Token is not null");
@@ -78,11 +70,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             System.out.println("Refresh Token is invalid or expired");
         }
 
-        // accessToken이 없거나, 인증 만료되었을 경우
-        if (accessToken == null || jwtUtil.isTokenExpired(accessToken)) {
 
-            // Access token이 만료된 경우, refresh token을 사용해 새로운 access token 발행 로직으로 넘어감
-            if (refreshToken != null) {
+                if (refreshToken != null) {
                   Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
 
                 // refreshToken이 있는지?? null인지 유무 판단하며 만료되었을 경우 삭제 조치
@@ -111,29 +100,26 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 chain.doFilter(request, response);
                 return;
             }
-            
-        // accessToken이 있거나, 인증이 만료되지 않았을 경우
-        } else {
-            userId = jwtUtil.getExtractUserId(accessToken);
 
-            // userId이 있으며, 권한인증이 없을 경우 (로그인전, 세션이 만료, 서버 재시작, 필터체인 우회, 로그아웃)
-            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = myUserDetailsService.loadUserByUsername(userId);
+        */
 
-                // accessToken에서 userId와 DB에 있는 userId의 정보와 같은지 체크
-                if (jwtUtil.validateToken(accessToken, userDetails)) {
-                    jwtUtil.setAuthentication(userDetails,request);
-                }
-            }
+        if (accessToken != null && jwtUtil.validateToken(accessToken)) {
+            // 토큰 spring 보안추가 및 저장
+            jwtUtil.setAuthentication(accessToken,request);
+        } else if (accessToken == null) {
+            SecurityContextHolder.clearContext();
+            System.out.println("accessToken 이 없음");
+        } else if (!jwtUtil.validateToken(accessToken)) {
+            SecurityContextHolder.clearContext();
+            invalidateCookie(response, "accessToken");
+            System.out.println("accessToken 유효성 검사 통과못함");
         }
+
         // 로그인 및 회원가입 경로를 예외 처리
         if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
             if (SecurityContextHolder.getContext().getAuthentication() != null) {
                 // 사용자가 이미 로그인된 경우
                 response.sendRedirect("/");
-                return;
-            } else {
-                response.sendRedirect(requestPath);
                 return;
             }
         }
@@ -149,12 +135,4 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         response.addCookie(cookie);
     }
 
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        Cookie cookie = new Cookie(name, value);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(maxAge);
-        response.addCookie(cookie);
-    }
 }

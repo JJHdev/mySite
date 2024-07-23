@@ -3,12 +3,14 @@ package com.project.mySite.config;
 import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.filter.JwtRequestFilter;
 import com.project.mySite.component.security.MyUserDetailsService;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.LogoutConfigurer;
@@ -24,12 +26,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class WebSecurityConfig {
 
     private final MyUserDetailsService myUserDetailsService;
-    private final JwtRequestFilter jwtRequestFilter;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public WebSecurityConfig(MyUserDetailsService myUserDetailsService, JwtRequestFilter jwtRequestFilter) {
+    public WebSecurityConfig(MyUserDetailsService myUserDetailsService,JwtUtil jwtUtil) {
         this.myUserDetailsService = myUserDetailsService;
-        this.jwtRequestFilter = jwtRequestFilter;
+        this.jwtUtil = jwtUtil;
     }
 
     @Bean
@@ -42,18 +44,8 @@ public class WebSecurityConfig {
                 )
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 폼 로그인을 비활성화
-                .logout(LogoutConfigurer::permitAll);
-                /*
-                .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.sendRedirect("/user/login");
-                        })
-                );
-                */
-
-
-        http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .logout(LogoutConfigurer::permitAll)
+                .addFilterBefore(new JwtRequestFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

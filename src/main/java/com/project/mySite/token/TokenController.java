@@ -7,7 +7,13 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,22 +22,27 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@RestController
+@Controller
 public class TokenController {
 
+    private final AuthenticationManager authenticationManager;
     private JwtUtil jwtUtil;
     private MyUserDetailsService myUserDetailsService;
     private TokenService tokenService;
 
-    public TokenController(JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService,TokenService tokenService ){
+    public TokenController(JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService, TokenService tokenService, AuthenticationManager authenticationManager){
         this.jwtUtil = jwtUtil;
         this.myUserDetailsService = myUserDetailsService;
         this.tokenService = tokenService;
+        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/refresh-token")
     public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String refreshToken = null;
+
+        String requestPath = request.getRequestURI();
+        System.out.println("Request Path: " + requestPath);
 
         // refreshToken 쿠키에서 추출
         if (request.getCookies() != null) {
@@ -48,18 +59,15 @@ public class TokenController {
 
             // refreshToken이 있는지? null인지 유무 판단하며 만료되었을 경우 삭제 조치
             if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
+
                 // refreshToken으로부터 userId 추출 및 accessToken 재발급
                 String userId = jwtUtil.getExtractUserId(refreshToken);
-                UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(userId);
-                String newAccessToken = jwtUtil.generateAccessToken(userDetails);
 
-                // 새로운 Access Token을 JSON 응답으로 추가
-                response.setContentType("application/json");
-                response.getWriter().write("{\"accessToken\": \"" + newAccessToken + "\"}");
-                response.setStatus(HttpServletResponse.SC_OK);
+                Authentication authentication =  jwtUtil.getAuthentication(refreshToken);
+                String newAccessToken = jwtUtil.generateAccessToken(authentication);
 
                 // 토큰 spring 보안추가 및 저장
-                jwtUtil.setAuthentication(userDetails,request);
+                jwtUtil.setAuthentication(newAccessToken,request);
 
             } else {
                 // RefreshToken이 유효하지 않을 경우

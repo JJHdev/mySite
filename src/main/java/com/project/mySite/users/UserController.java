@@ -25,23 +25,21 @@ import java.util.Map;
 @Controller
 public class UserController {
 
+    @Value("${jwt.acessExp}")
+    private long ACESS_TOKEN_TIME;
     @Value("${jwt.refreshExp}")
     private long REFRESH_TOKEN_TIME;
 
     private final UserService userService;
-    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final MyUserDetailsService myUserDetailsService;
 
     @Autowired
-    public UserController(UserService userService, AuthenticationManager authenticationManager, JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService) {
+    public UserController(UserService userService, JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService) {
         this.userService = userService;
-        this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.myUserDetailsService = myUserDetailsService;
     }
-
-
 
     @GetMapping("/")
     public String home(){
@@ -76,14 +74,15 @@ public class UserController {
     }
 
     @PostMapping("/user/login")
-    public <T> ResponseEntity login(UsersDTO usersDTO, HttpServletResponse response) throws IOException {
+    public <T> ResponseEntity login(UsersDTO usersDTO, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-        ServiceResult<UsersDTO> result = userService.login(usersDTO);
+        ServiceResult<UsersDTO> result = userService.login(usersDTO, request);
         UsersDTO userDTO = result.getData();
 
         if(result.isSuccess()){
-            addCookie(response, "refreshToken", userDTO.getRefreshToken(), (int) REFRESH_TOKEN_TIME / 1000); // 30분
-            return ResponseEntity.ok().body(Map.of("success", true,"redirect", "/","accessToken", userDTO.getAccessToken()));
+            addRefreshToken(response, "refreshToken", userDTO.getRefreshToken(), (int) REFRESH_TOKEN_TIME / 1000);
+            addAccessToekn(response, "accessToken", userDTO.getAccessToken(), (int) ACESS_TOKEN_TIME / 1000);
+            return ResponseEntity.ok().body(Map.of("success", true,"redirect", "/"));
         }else{
             return ResponseEntity.ok().body(Map.of("success", false, "message", result.getErrorMessage()));
         }
@@ -103,7 +102,16 @@ public class UserController {
         }
     }
 
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
+    private void addAccessToekn(HttpServletResponse response, String name, String value, int maxAge) {
+        Cookie cookie = new Cookie(name, value);
+        cookie.setHttpOnly(false);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(maxAge);
+        response.addCookie(cookie);
+    }
+
+    private void addRefreshToken(HttpServletResponse response, String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
@@ -112,31 +120,7 @@ public class UserController {
         response.addCookie(cookie);
     }
 
-    @PostMapping("/refresh")
-    public void refresh(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String refreshToken = null;
-        if (request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("refreshToken".equals(cookie.getName())) {
-                    refreshToken = cookie.getValue();
-                    break;
-                }
-            }
-        }
-
-        if (refreshToken != null && !jwtUtil.isTokenExpired(refreshToken)) {
-            String username = jwtUtil.getExtractUserId(refreshToken);
-            UserDetails userDetails = myUserDetailsService.loadUserByUsername(username);
-            String newAccessToken = jwtUtil.generateAccessToken(userDetails);
-
-            addCookie(response, "accessToken", newAccessToken, 10); // 10초
-        } else {
-            invalidateCookie(response, "refreshToken");
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Refresh token has expired. Please login again.");
-        }
-    }
-
-    private void invalidateCookie(HttpServletResponse response, String cookieName) {
+    private void deleteCookie(HttpServletResponse response, String cookieName) {
         Cookie cookie = new Cookie(cookieName, null);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
