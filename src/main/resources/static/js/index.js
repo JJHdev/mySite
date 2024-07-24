@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-    if(true) {
+    if(false) {
         $.ajax({
             type: 'GET',
             url: contextPath + '/charts', // 예시: 사용자 프로필 요청
@@ -18,4 +18,5 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     }
+
 });

@@ -95,7 +95,6 @@ public class UserService {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usersDTO.getUserId(), usersDTO.getPassword()));
 
             String accessToken = jwtUtil.generateAccessToken(authentication);
-            // DB에 refreshToken을 저장하고 쿠키에 저장할 용도
             Token saveRefreshToken = tokenService.createRefreshToken(authentication);
 
             usersDTO.setAccessToken(accessToken);

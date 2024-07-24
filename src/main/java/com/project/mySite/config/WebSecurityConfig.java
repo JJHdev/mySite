@@ -3,6 +3,7 @@ package com.project.mySite.config;
 import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.filter.JwtRequestFilter;
 import com.project.mySite.component.security.MyUserDetailsService;
+import com.project.mySite.token.TokenService;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,11 +28,13 @@ public class WebSecurityConfig {
 
     private final MyUserDetailsService myUserDetailsService;
     private final JwtUtil jwtUtil;
+    private final TokenService tokenService;
 
     @Autowired
-    public WebSecurityConfig(MyUserDetailsService myUserDetailsService,JwtUtil jwtUtil) {
+    public WebSecurityConfig(MyUserDetailsService myUserDetailsService,JwtUtil jwtUtil,TokenService tokenService) {
         this.myUserDetailsService = myUserDetailsService;
         this.jwtUtil = jwtUtil;
+        this.tokenService = tokenService;
     }
 
     @Bean
@@ -45,7 +48,7 @@ public class WebSecurityConfig {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 폼 로그인을 비활성화
                 .logout(LogoutConfigurer::permitAll)
-                .addFilterBefore(new JwtRequestFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtRequestFilter(jwtUtil, tokenService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

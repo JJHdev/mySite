@@ -26,9 +26,9 @@ import java.util.Optional;
 public class TokenController {
 
     private final AuthenticationManager authenticationManager;
-    private JwtUtil jwtUtil;
-    private MyUserDetailsService myUserDetailsService;
-    private TokenService tokenService;
+    private final JwtUtil jwtUtil;
+    private final MyUserDetailsService myUserDetailsService;
+    private final TokenService tokenService;
 
     public TokenController(JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService, TokenService tokenService, AuthenticationManager authenticationManager){
         this.jwtUtil = jwtUtil;
