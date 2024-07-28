@@ -21,7 +21,6 @@ $(document).ready(function() {
             url: $(this).attr('action'),
             data: formData,
             success: function (data) {
-                debugger;
                 if (data.success) {
                     window.location.href = contextPath + data.redirect; // 페이지 이동
                 } else {
@@ -29,7 +28,6 @@ $(document).ready(function() {
                 }
             },
             error: function (jqXHR, textStatus, errorThrown) {
-                debugger;
                 alert('Registration failed. Please try again.');
                 console.error('Error:', errorThrown);
             }

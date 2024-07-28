@@ -41,8 +41,8 @@ public class JwtUtil {
 
     @Value("${jwt.secret}")
     private String secretKey;
-    @Value("${jwt.acessExp}")
-    private long ACESS_TOKEN_TIME;
+    @Value("${jwt.accessExp}")
+    private long ACCESS_TOKEN_TIME;
     @Value("${jwt.refreshExp}")
     private long REFRESH_TOKEN_TIME;
 
@@ -56,7 +56,7 @@ public class JwtUtil {
     public String generateAccessToken(Authentication authentication) {
         Claims claims = Jwts.claims().setSubject(authentication.getName());
         Date now = new Date();
-        Date expireDate = new Date(now.getTime() + ACESS_TOKEN_TIME);
+        Date expireDate = new Date(now.getTime() + ACCESS_TOKEN_TIME);
 
         return Jwts.builder()
                 .setClaims(claims)

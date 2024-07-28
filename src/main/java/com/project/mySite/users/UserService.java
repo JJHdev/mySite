@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Transactional
 @Service
 public class UserService {
 
@@ -45,7 +44,7 @@ public class UserService {
         this.tokenService  = tokenService;
         this.authenticationManager = authenticationManager;
     }
-
+    @Transactional
     public ServiceResult<Users> register(UsersDTO usersDTO){
 
         //UserDTO to user
@@ -68,10 +67,8 @@ public class UserService {
     }
 
     public ServiceResult<Users> checkUser(UsersDTO usersDTO){
-
         //UserDTO to user
         Users users = UserDtoToUser(usersDTO);
-
         //유효성검사
         try {
             ValidUserIdDuplicate(users);
@@ -85,16 +82,15 @@ public class UserService {
     }
 
     public ServiceResult<UsersDTO> login(UsersDTO usersDTO, HttpServletRequest request) {
-
         //UserDTO to user
         Users users = UserDtoToUser(usersDTO);
 
         try{
             validateUserIdAndPassword(users);
-
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(usersDTO.getUserId(), usersDTO.getPassword()));
 
             String accessToken = jwtUtil.generateAccessToken(authentication);
+            int int1 = tokenService.deleteByUserId(users.getUserId());
             Token saveRefreshToken = tokenService.createRefreshToken(authentication);
 
             usersDTO.setAccessToken(accessToken);

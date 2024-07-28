@@ -19,13 +19,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Optional;
 
-
-
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    @Value("${jwt.acessExp}")
-    private long ACESS_TOKEN_TIME;
-
+    @Value("${jwt.accessExp}")
+    private long ACCESS_TOKEN_TIME = 1800000;
 
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
@@ -121,16 +118,13 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             // Refresh Token이 있는지 확인
             if (refreshToken != null) {
                 Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
-
                 // refreshToken이 있는지? null인지 유무 판단하며 만료되었을 경우 삭제 조치
                 if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
-
                     Authentication authentication =  jwtUtil.getAuthentication(refreshToken);
                     String newAccessToken = jwtUtil.generateAccessToken(authentication);
-
                     // 토큰 spring 보안추가 및 저장
                     jwtUtil.setAuthentication(newAccessToken,request);
-                    addAccessToken(response, "accessToken", newAccessToken, (int) ACESS_TOKEN_TIME / 1000);
+                    addAccessToken(response, "accessToken", newAccessToken, (int) ACCESS_TOKEN_TIME / 1000);
 
                 } else {
                     // RefreshToken이 유효하지 않을 경우
@@ -157,8 +151,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private void invalidateCookie(HttpServletResponse response, String cookieName) {
         Cookie cookie = new Cookie(cookieName, null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        cookie.setHttpOnly(false);
+        cookie.setSecure(false);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);

@@ -18,10 +18,6 @@ import java.util.Optional;
 @Service
 public class TokenService {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
-    @Value("${jwt.acessExp}")
-    private long ACESS_TOKEN_TIME;
     @Value("${jwt.refreshExp}")
     private long REFRESH_TOKEN_TIME;
 
@@ -48,8 +44,8 @@ public class TokenService {
         return tokenRepository.save(token);
     }
 
-    public void deleteByUserId(String userId) {
-        tokenRepository.deleteByUserId(userId);
+    public Integer deleteByUserId(String userId) {
+        return tokenRepository.deleteByUserId(userId);
     }
 
     public Optional<Token> findByToken(String token) {

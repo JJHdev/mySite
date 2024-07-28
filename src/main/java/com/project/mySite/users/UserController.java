@@ -25,8 +25,8 @@ import java.util.Map;
 @Controller
 public class UserController {
 
-    @Value("${jwt.acessExp}")
-    private long ACESS_TOKEN_TIME;
+    @Value("${jwt.accessExp}")
+    private long ACCESS_TOKEN_TIME;
     @Value("${jwt.refreshExp}")
     private long REFRESH_TOKEN_TIME;
 
@@ -80,8 +80,8 @@ public class UserController {
         UsersDTO userDTO = result.getData();
 
         if(result.isSuccess()){
+            addAccessToekn(response, "accessToken", userDTO.getAccessToken(), (int) ACCESS_TOKEN_TIME / 1000);
             addRefreshToken(response, "refreshToken", userDTO.getRefreshToken(), (int) REFRESH_TOKEN_TIME / 1000);
-            addAccessToekn(response, "accessToken", userDTO.getAccessToken(), (int) ACESS_TOKEN_TIME / 1000);
             return ResponseEntity.ok().body(Map.of("success", true,"redirect", "/"));
         }else{
             return ResponseEntity.ok().body(Map.of("success", false, "message", result.getErrorMessage()));
