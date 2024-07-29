@@ -92,7 +92,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
 
             // 로그인 및 회원가입 경로를 예외 처리
-            if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
+            if (requestPath.equals("/user/login") || requestPath.equals("/user/register") || requestPath.equals("/user/findPassword")) {
                 if (SecurityContextHolder.getContext().getAuthentication() != null) {
                     // 사용자가 이미 로그인된 경우
                     response.sendRedirect("/");

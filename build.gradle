@@ -51,6 +51,9 @@ dependencies {
 	implementation 'org.glassfish.jaxb:jaxb-runtime:2.3.2'
 	implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.1'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+
+	//비밀번호 초기화시 사용할 라이브러리
+	implementation 'org.apache.commons:commons-lang3:3.12.0'
 }
 
 tasks.named('test') {

@@ -6,7 +6,6 @@ public class ServiceResult<T> {
     private String errorMessage;
     private boolean success;
 
-
     public ServiceResult() {
     }
 

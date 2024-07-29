@@ -76,6 +76,11 @@ public class UserController {
         }
     }
 
+    @GetMapping("/user/findPassword")
+    public String findPassword(){
+        return "users/findPassword";
+    }
+
     @PostMapping("/user/checkUser")
     public <T> ResponseEntity checkUser(UsersDTO usersDTO){
 

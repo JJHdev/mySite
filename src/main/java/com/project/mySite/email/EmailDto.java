@@ -15,5 +15,7 @@ public class EmailDto {
     private String email;
     private String code;
     private LocalDateTime expiration;
+    private String userId;
+    private String userName;
 
 }

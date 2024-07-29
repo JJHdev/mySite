@@ -4,12 +4,14 @@ import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.Utils.ServiceResult;
 import com.project.mySite.component.Utils.Utils;
 import com.project.mySite.component.exception.ValidationUserException;
+import com.project.mySite.email.EmailDto;
 import com.project.mySite.email.EmailRepository;
 import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,7 +22,6 @@ import java.util.Optional;
 
 @Service
 public class UserService {
-
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
     private final EmailRepository emailRepository;
@@ -105,6 +106,38 @@ public class UserService {
         }
     }
 
+    public ServiceResult<UsersDTO>  changePassword(EmailDto emailDto){
+        //UserDTO to user
+        UsersDTO usersDTO = new UsersDTO();
+        usersDTO.setUserId(emailDto.getUserId());
+        usersDTO.setUserName(emailDto.getUserName());
+        usersDTO.setEmail1(emailDto.getEmail());
+
+        Users users = UserDtoToUser(usersDTO);
+        try{
+            validateUserIdAndUserNameAndEmail(users.getUserId(), users.getUserName(), users.getEmail());
+
+            //랜덤 비밀번호 받기
+            String randomPassword = generateRandomPassword();
+            users.setPassword(passwordEncoder.encode(randomPassword));
+            usersDTO.setPassword(randomPassword);
+
+            // 비밀번호 업데이트
+            int updatedCount = userRepository.updatePassword(users.getUserId(), users.getUserName(), users.getEmail(), users.getPassword());
+            if (updatedCount == 0) {
+                throw new ValidationUserException("계정 정보를 확인할 수 없습니다.");
+            }
+
+            return ServiceResult.success(usersDTO);
+        } catch (ValidationUserException e){
+            return ServiceResult.failure(e.getMessage());
+        } catch (AuthenticationException e) {
+            return ServiceResult.failure("Invalid credentials: " + e.getMessage());
+        } catch (Exception e) {
+            return ServiceResult.failure("An unexpected error occurred: " + e.getMessage());
+        }
+    }
+
     private Users UserDtoToUser(UsersDTO usersDTO){
         Users users = new Users();
 
@@ -139,7 +172,6 @@ public class UserService {
         if (!isEmailVerified) {
             throw new ValidationUserException("이메일 인증이 완료되지 않았습니다.");
         }
-
         // 중복 이메일 체크
         userRepository.findByEmail(users.getEmail())
             .ifPresent(m -> {
@@ -172,6 +204,19 @@ public class UserService {
         if (!passwordEncoder.matches(users.getPassword(), foundUser.getPassword())) {
             throw new ValidationUserException("비밀번호가 일치하지 않습니다.");
         }
+    }
+
+    public void validateUserIdAndUserNameAndEmail(String userId, String Username,String email) {
+        // 사용자 ID 검증
+        Optional<Users> optionalUser = userRepository.findByUserIdAndUserNameAndEmail(userId, Username, email);
+        if (optionalUser.isEmpty()) {
+            throw new ValidationUserException("가입된 계정 정보가 없습니다.");
+        }
+    }
+
+    private String generateRandomPassword() {
+        // 랜덤 비밀번호 생성 로직 구현 (예: 8자리 랜덤 문자열 생성)
+        return org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric(8);
     }
 
 }
