@@ -1,6 +1,8 @@
 package com.project.mySite.config;
 
 import com.project.mySite.component.Utils.JwtUtil;
+import com.project.mySite.component.exception.CustomAccessDeniedException;
+import com.project.mySite.component.exception.JwtAuthenticationEntryPoint;
 import com.project.mySite.component.filter.JwtRequestFilter;
 import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.token.TokenService;
@@ -27,12 +29,17 @@ public class WebSecurityConfig {
     private final MyUserDetailsService myUserDetailsService;
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final CustomAccessDeniedException customAccessDeniedException;
 
     @Autowired
-    public WebSecurityConfig(MyUserDetailsService myUserDetailsService,JwtUtil jwtUtil,TokenService tokenService) {
+    public WebSecurityConfig(MyUserDetailsService myUserDetailsService,JwtUtil jwtUtil,TokenService tokenService
+                            ,JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint,CustomAccessDeniedException customAccessDeniedException ) {
         this.myUserDetailsService = myUserDetailsService;
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
+        this.jwtAuthenticationEntryPoint = jwtAuthenticationEntryPoint;
+        this.customAccessDeniedException = customAccessDeniedException;
     }
 
     @Bean
@@ -46,7 +53,12 @@ public class WebSecurityConfig {
                 .sessionManagement(sessionManagement -> sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .formLogin(AbstractHttpConfigurer::disable) // 기본 폼 로그인을 비활성화
                 .logout(LogoutConfigurer::permitAll)
-                .addFilterBefore(new JwtRequestFilter(jwtUtil, tokenService), UsernamePasswordAuthenticationFilter.class);
+                .exceptionHandling(exceptionHandling ->
+                        exceptionHandling
+                                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                                .accessDeniedHandler(customAccessDeniedException)
+                )
+                .addFilterBefore(new JwtRequestFilter(jwtUtil, tokenService,jwtAuthenticationEntryPoint,customAccessDeniedException), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

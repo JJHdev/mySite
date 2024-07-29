@@ -5,8 +5,12 @@ import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
 import jakarta.servlet.http.Cookie;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,10 +26,14 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
+    private final AuthenticationEntryPoint authenticationEntryPoint;
+    private final AccessDeniedHandler accessDeniedHandler;
 
-    public JwtRequestFilter(JwtUtil jwtUtil, TokenService tokenService) {
+    public JwtRequestFilter(JwtUtil jwtUtil, TokenService tokenService,AuthenticationEntryPoint authenticationEntryPoint,AccessDeniedHandler accessDeniedHandler) {
         this.jwtUtil = jwtUtil;
         this.tokenService = tokenService;
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.accessDeniedHandler = accessDeniedHandler;
     }
 
     @Override
@@ -57,51 +65,52 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
 
-        if (accessToken != null && jwtUtil.validateToken(accessToken)) {
-            // 토큰 spring 보안추가 및 저장
-            jwtUtil.setAuthentication(accessToken,request);
+        try {
 
-        } else if (accessToken == null || !jwtUtil.validateToken(accessToken)) {
-            SecurityContextHolder.clearContext();
-            invalidateCookie(response, "accessToken");
-            System.out.println("accessToken 유효성 검사 통과못함");
+            if (accessToken != null && jwtUtil.validateToken(accessToken)) {
+                // 토큰 spring 보안추가 및 저장
+                jwtUtil.setAuthentication(accessToken,request);
 
-            // Refresh Token이 있는지 확인
-            if (refreshToken != null) {
-                Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
-                // refreshToken이 있는지? null인지 유무 판단하며 만료되었을 경우 삭제 조치
-                if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
-                    Authentication authentication =  jwtUtil.getAuthentication(refreshToken);
-                    String newAccessToken = jwtUtil.generateAccessToken(authentication);
-                    // 토큰 spring 보안추가 및 저장
-                    jwtUtil.setAuthentication(newAccessToken,request);
-                    addAccessToken(response, "accessToken", newAccessToken, (int) ACCESS_TOKEN_TIME / 1000);
-
-                } else {
-                    // RefreshToken이 유효하지 않을 경우
-                    invalidateCookie(response, "accessToken");
-                    invalidateCookie(response, "refreshToken");
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.sendRedirect("/");
-                }
-            } else {
-                // RefreshToken이 유효하지 않을 경우
+            } else if (accessToken == null || !jwtUtil.validateToken(accessToken)) {
+                SecurityContextHolder.clearContext();
                 invalidateCookie(response, "accessToken");
-                invalidateCookie(response, "refreshToken");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.sendRedirect("/");
+                System.out.println("accessToken 유효성 검사 통과못함");
+
+                // Refresh Token이 있는지 확인
+                if (refreshToken != null) {
+                    Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
+                    // refreshToken이 있는지? null인지 유무 판단하며 만료되었을 경우 삭제 조치
+                    if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
+                        Authentication authentication =  jwtUtil.getAuthentication(refreshToken);
+                        String newAccessToken = jwtUtil.generateAccessToken(authentication);
+                        // 토큰 spring 보안추가 및 저장
+                        jwtUtil.setAuthentication(newAccessToken,request);
+                        addAccessToken(response, "accessToken", newAccessToken, (int) ACCESS_TOKEN_TIME / 1000);
+
+                    }
+                }
             }
+
+            // 로그인 및 회원가입 경로를 예외 처리
+            if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
+                if (SecurityContextHolder.getContext().getAuthentication() != null) {
+                    // 사용자가 이미 로그인된 경우
+                    response.sendRedirect("/");
+                    return;
+                }
+            }
+
+            chain.doFilter(request, response);
+        } catch (AccessDeniedException e) {
+            invalidateCookie(response, "accessToken");
+            invalidateCookie(response, "refreshToken");
+            accessDeniedHandler.handle(request, response, e);
+        } catch (Exception e) {
+            invalidateCookie(response, "accessToken");
+            invalidateCookie(response, "refreshToken");
+            authenticationEntryPoint.commence(request, response, (AuthenticationException) e);
         }
 
-        // 로그인 및 회원가입 경로를 예외 처리
-        if (requestPath.equals("/user/login") || requestPath.equals("/user/register")) {
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                // 사용자가 이미 로그인된 경우
-                response.sendRedirect("/");
-                return;
-            }
-        }
-        chain.doFilter(request, response);
     }
 
     private void invalidateCookie(HttpServletResponse response, String cookieName) {
@@ -121,18 +130,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
         response.addCookie(cookie);
-    }
-
-    private void failedSendRedirect(HttpServletResponse response, String redirectUrl) throws IOException {
-        response.setContentType("text/html");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(
-                "<script>" +
-                        "alert('로그인 요청드립니다');" +
-                        "window.location.href = '" + redirectUrl + "';" +
-                        "</script>"
-        );
-        response.getWriter().close();
     }
 
 }
