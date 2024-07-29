@@ -1,17 +1,12 @@
 package com.project.mySite.token;
 
 import com.project.mySite.component.Utils.JwtUtil;
-import com.project.mySite.component.security.MyUserDetailsService;
-import com.project.mySite.users.Users;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.Optional;
 
 @Transactional

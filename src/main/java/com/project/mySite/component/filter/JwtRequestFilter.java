@@ -1,16 +1,12 @@
 package com.project.mySite.component.filter;
 
 import com.project.mySite.component.Utils.JwtUtil;
-import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
 import jakarta.servlet.http.Cookie;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -61,51 +57,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             }
         }
 
-        /*
-
-        if (refreshToken != null) {
-            System.out.println("Refresh Token is not null");
-             Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
-            if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
-                System.out.println("Refresh Token is present and valid");
-            }
-           } else {
-            System.out.println("Refresh Token is invalid or expired");
-        }
-
-
-                if (refreshToken != null) {
-                  Optional<Token> optionalToken = tokenService.getTokenFromJwt(refreshToken);
-
-                // refreshToken이 있는지?? null인지 유무 판단하며 만료되었을 경우 삭제 조치
-                 if (optionalToken.isPresent() && tokenService.verifyExpiration(optionalToken.get()).isPresent()) {
-
-                    // refreshToken으로부터 userId 추출 및 accessToken 재발급
-                    userId = jwtUtil.getExtractUserId(refreshToken);
-                    UserDetails userDetails = this.myUserDetailsService.loadUserByUsername(userId);
-                    String newAccessToken = jwtUtil.generateAccessToken(userDetails);
-
-                    // 새로운 Access Token을 JSON 응답으로 추가
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"accessToken\": \"" + newAccessToken + "\"}");
-
-                    // 토큰 spring 보안추가 및 저장
-                    jwtUtil.setAuthentication(userDetails,request);
-                }else{
-                    // RefreshToken이 유효하지 않을 경우
-                    invalidateCookie(response, "refreshToken");
-                    chain.doFilter(request, response);
-                    return;
-                }
-            } else {
-                // RefreshToken이 유효하지 않을 경우
-                invalidateCookie(response, "refreshToken");
-                chain.doFilter(request, response);
-                return;
-            }
-
-        */
-
         if (accessToken != null && jwtUtil.validateToken(accessToken)) {
             // 토큰 spring 보안추가 및 저장
             jwtUtil.setAuthentication(accessToken,request);
@@ -128,13 +79,17 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
                 } else {
                     // RefreshToken이 유효하지 않을 경우
+                    invalidateCookie(response, "accessToken");
                     invalidateCookie(response, "refreshToken");
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.sendRedirect("/");
                 }
             } else {
                 // RefreshToken이 유효하지 않을 경우
+                invalidateCookie(response, "accessToken");
                 invalidateCookie(response, "refreshToken");
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.sendRedirect("/");
             }
         }
 
@@ -166,6 +121,18 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
         response.addCookie(cookie);
+    }
+
+    private void failedSendRedirect(HttpServletResponse response, String redirectUrl) throws IOException {
+        response.setContentType("text/html");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(
+                "<script>" +
+                        "alert('로그인 요청드립니다');" +
+                        "window.location.href = '" + redirectUrl + "';" +
+                        "</script>"
+        );
+        response.getWriter().close();
     }
 
 }

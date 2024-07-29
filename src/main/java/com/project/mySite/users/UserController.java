@@ -1,24 +1,15 @@
 package com.project.mySite.users;
 
-import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.Utils.ServiceResult;
-import com.project.mySite.component.security.MyUserDetailsService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-
 import java.io.IOException;
 import java.util.Map;
 
@@ -31,14 +22,11 @@ public class UserController {
     private long REFRESH_TOKEN_TIME;
 
     private final UserService userService;
-    private final JwtUtil jwtUtil;
-    private final MyUserDetailsService myUserDetailsService;
 
     @Autowired
-    public UserController(UserService userService, JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.jwtUtil = jwtUtil;
-        this.myUserDetailsService = myUserDetailsService;
+
     }
 
     @GetMapping("/")

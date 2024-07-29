@@ -4,24 +4,18 @@ import com.project.mySite.component.Utils.JwtUtil;
 import com.project.mySite.component.Utils.ServiceResult;
 import com.project.mySite.component.Utils.Utils;
 import com.project.mySite.component.exception.ValidationUserException;
-import com.project.mySite.component.security.MyUserDetailsService;
 import com.project.mySite.email.EmailRepository;
 import com.project.mySite.token.Token;
 import com.project.mySite.token.TokenService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.util.Optional;
 
 @Service
@@ -35,8 +29,7 @@ public class UserService {
     private final AuthenticationManager authenticationManager;
 
     @Autowired
-    public UserService(UserRepository userRepository, JwtUtil jwtUtil,
-                       EmailRepository emailRepository, PasswordEncoder passwordEncoder, TokenService tokenService, AuthenticationManager authenticationManager) {
+    public UserService(UserRepository userRepository, JwtUtil jwtUtil, EmailRepository emailRepository, PasswordEncoder passwordEncoder, TokenService tokenService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.jwtUtil = jwtUtil;
         this.emailRepository = emailRepository;

@@ -1,40 +1,24 @@
 package com.project.mySite.token;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.mySite.component.Utils.JwtUtil;
-import com.project.mySite.component.security.MyUserDetailsService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 @Controller
 public class TokenController {
 
-    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final MyUserDetailsService myUserDetailsService;
     private final TokenService tokenService;
 
-    public TokenController(JwtUtil jwtUtil, MyUserDetailsService myUserDetailsService, TokenService tokenService, AuthenticationManager authenticationManager){
+    public TokenController(JwtUtil jwtUtil, TokenService tokenService){
         this.jwtUtil = jwtUtil;
-        this.myUserDetailsService = myUserDetailsService;
         this.tokenService = tokenService;
-        this.authenticationManager = authenticationManager;
     }
 
     @PostMapping("/refresh-token")
